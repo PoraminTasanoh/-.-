@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard ติดตามรายงานโครงการ — โรงเรียนบ้านผึ้ง</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#f0f4f8; --white:#ffffff; --card:#ffffff;
+  --border:#dde3ed; --border2:#c5cfe0;
+  --navy:#1a3a6b; --navy2:#1d4ed8; --navy-light:#e8eef8;
+  --green:#16a34a; --green-bg:#dcfce7; --green-border:#86efac;
+  --red:#dc2626; --red-bg:#fee2e2; --red-border:#fca5a5;
+  --yellow-bg:#fefce8; --yellow-border:#fde047; --yellow-txt:#854d0e;
+  --muted:#64748b; --text:#1e293b; --text2:#475569;
+  --font:'Sarabun',sans-serif; --font-h:'Kanit',sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+header{background:var(--navy);color:#fff;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hdr-inner{max-width:1400px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.hdr-logo{font-size:28px;flex-shrink:0;}
+.hdr-title h1{font-family:var(--font-h);font-size:1.2rem;font-weight:600;letter-spacing:.3px;}
+.hdr-title p{font-size:.8rem;opacity:.75;margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+.btn{padding:8px 16px;border-radius:7px;font-family:var(--font-h);font-size:.85rem;font-weight:500;cursor:pointer;border:none;transition:all .18s;display:flex;align-items:center;gap:6px;}
+.btn-white{background:#fff;color:var(--navy);} .btn-white:hover{background:#e8eef8;}
+.btn-green{background:#16a34a;color:#fff;} .btn-green:hover{background:#15803d;}
+.btn-yellow{background:#ca8a04;color:#fff;} .btn-yellow:hover{background:#a16207;}
+.btn-red{background:#dc2626;color:#fff;} .btn-red:hover{background:#b91c1c;}
+
+/* ── LAYOUT ── */
+.main{max-width:1400px;margin:0 auto;padding:20px 24px;}
+
+/* ── STAT CARDS ── */
+
+
+.stat.total{border-top-color:var(--navy);}
+.stat.done{border-top-color:var(--green);}
+.stat.pend{border-top-color:var(--red);}
+.stat.yr68{border-top-color:#dc2626;}
+.stat.yr67{border-top-color:#7c3aed;}
+.stat.yr66{border-top-color:#0891b2;}
+.stat-num{font-family:var(--font-h);font-size:2rem;font-weight:700;line-height:1;}
+.stat.total .stat-num{color:var(--navy);}
+.stat.done  .stat-num{color:var(--green);}
+.stat.pend  .stat-num{color:var(--red);}
+.stat.yr68  .stat-num{color:#dc2626;}
+.stat.yr67  .stat-num{color:#7c3aed;}
+.stat.yr66  .stat-num{color:#0891b2;}
+.stat.yr68p .stat-num{color:#991b1b;}
+.stat.yr67p .stat-num{color:#6d28d9;}
+.stat.yr66p .stat-num{color:#0e7490;}
+.stat.yr68p{border-top-color:#991b1b;}
+.stat.yr67p{border-top-color:#6d28d9;}
+.stat.yr66p{border-top-color:#0e7490;}
+.stat-lbl{font-size:.75rem;color:var(--muted);margin-top:4px;}
+.stat-bar{height:4px;border-radius:99px;background:#e2e8f0;margin-top:10px;overflow:hidden;}
+.stat-bar-fill{height:100%;border-radius:99px;background:currentColor;transition:width .5s;}
+
+/* ── PROGRESS BAR ── */
+.prog-wrap{background:var(--card);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;}
+.prog-title{font-family:var(--font-h);font-size:.85rem;font-weight:600;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;}
+.prog-bar{height:18px;background:#e2e8f0;border-radius:99px;overflow:hidden;position:relative;}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#16a34a,#22c55e);transition:width .6s ease;display:flex;align-items:center;padding-left:10px;}
+.prog-pct{font-size:.75rem;font-weight:700;color:#fff;white-space:nowrap;}
+
+/* ── FILTERS ── */
+.filter-bar{background:var(--card);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filter-group{display:flex;align-items:center;gap:6px;}
+.filter-lbl{font-size:.8rem;color:var(--muted);font-weight:500;white-space:nowrap;}
+.filter-input{padding:7px 12px;border:1px solid var(--border2);border-radius:7px;font-family:var(--font);font-size:.88rem;color:var(--text);background:#fff;outline:none;transition:border-color .2s;}
+.filter-input:focus{border-color:var(--navy2);}
+select.filter-input{cursor:pointer;}
+.filter-sep{width:1px;height:28px;background:var(--border2);}
+.found-badge{font-size:.78rem;color:var(--muted);margin-left:auto;white-space:nowrap;}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.table-title{font-family:var(--font-h);font-size:.9rem;font-weight:600;color:var(--navy);}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.88rem;}
+thead tr{background:var(--navy);}
+th{padding:10px 12px;text-align:left;color:#fff;font-family:var(--font-h);font-size:.8rem;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:10;}
+th.center,td.center{text-align:center;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+tbody tr:hover{background:#f8fafc;}
+tbody tr.row-done{} 
+tbody tr.row-pend{background:var(--yellow-bg);}
+tbody tr.row-pend:hover{background:#fef9c3;}
+td{padding:9px 12px;vertical-align:middle;color:var(--text);}
+.td-num{color:var(--muted);font-size:.8rem;}
+.td-code{font-size:.8rem;font-weight:600;color:var(--navy2);}
+.td-name{font-weight:500;line-height:1.4;}
+.td-sub{font-size:.75rem;color:#7c3aed;font-style:italic;margin-top:2px;}
+.td-teacher{font-size:.85rem;}
+.td-budget{font-size:.82rem;color:var(--text2);text-align:right;}
+.badge-yr{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600;}
+.badge-68{background:#fee2e2;color:#991b1b;}
+.badge-67{background:#f3e8ff;color:#6d28d9;}
+.badge-66{background:#e0f2fe;color:#0369a1;}
+
+/* ── CHECKBOX ── */
+.check-wrap{display:flex;align-items:center;justify-content:center;gap:6px;}
+.chk{width:20px;height:20px;cursor:pointer;accent-color:var(--green);}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:.75rem;font-weight:600;}
+.status-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.status-pend{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+
+/* ── DATE SENT ── */
+.date-input{padding:4px 8px;border:1px solid var(--border2);border-radius:5px;font-family:var(--font);font-size:.78rem;color:var(--text2);width:110px;outline:none;}
+.date-input:focus{border-color:var(--navy2);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty-ico{font-size:2.5rem;margin-bottom:10px;}
+
+
+/* ── LOCK BADGE ── */
+.lock-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;font-family:var(--font-h);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.lock-badge.locked{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);}
+.lock-badge.locked:hover{background:rgba(255,255,255,.25);}
+.lock-badge.unlocked{background:#16a34a;color:#fff;border:1px solid #15803d;}
+.lock-badge.unlocked:hover{background:#15803d;}
+
+/* ── PIN MODAL ── */
+.pin-modal{background:#fff;border-radius:18px;width:100%;max-width:340px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;}
+.pin-modal h3{font-family:var(--font-h);font-size:1.15rem;color:var(--navy);margin-bottom:6px;}
+.pin-modal .pin-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px;}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:20px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#e2e8f0;transition:background .15s;}
+.pin-dot.filled{background:var(--navy);}
+.pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
+.pin-btn{padding:14px;border-radius:10px;border:1.5px solid var(--border2);background:#fff;font-family:var(--font-h);font-size:1.2rem;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;}
+.pin-btn:hover{background:var(--navy-light);border-color:var(--navy);}
+.pin-btn:active{transform:scale(.95);}
+.pin-btn.del{font-size:1rem;color:var(--muted);}
+.pin-err{color:var(--red);font-size:.82rem;min-height:20px;margin-bottom:2px;}
+.pin-shake .pin-dots{animation:shake .3s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+
+/* ── NEW DASHBOARD STATS ── */
+.db-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.db-summary-card{background:var(--card);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);border:1px solid var(--border);border-top:3px solid var(--border2);}
+.db-big-num{font-size:42px;font-weight:700;line-height:1;font-family:var(--font-h);}
+.db-big-lbl{font-size:13px;color:var(--muted);margin-top:6px;}
+.db-big-sub{font-size:12px;color:var(--muted);margin-top:3px;opacity:.7;}
+.db-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.db-years{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.yr-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.yr-head{padding:14px 18px 10px;border-bottom:1px solid var(--border);}
+.yr-head-label{font-size:.88rem;font-weight:600;font-family:var(--font-h);color:var(--text);}
+.yr-head-total{font-size:.75rem;color:var(--muted);margin-top:3px;}
+.yr-rows{padding:8px 0;}
+.yr-row{display:flex;align-items:center;gap:12px;padding:10px 18px;}
+.yr-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.icon-done{background:var(--green-bg);color:var(--green);}
+.icon-pend{background:var(--red-bg);color:var(--red);}
+.yr-info{flex:1;min-width:0;}
+.yr-lbl{font-size:.75rem;color:var(--muted);}
+.yr-num{font-size:26px;font-weight:700;line-height:1.2;font-family:var(--font-h);}
+.yr-num.done{color:var(--green);}
+.yr-num.pend{color:var(--red);}
+.yr-bar{height:5px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:5px;}
+.yr-bar-fill{height:100%;border-radius:99px;transition:width .6s ease;}
+.fill-done{background:var(--green);}
+.fill-pend{background:var(--red);}
+.yr-pct{font-size:.7rem;color:var(--muted);margin-top:3px;}
+.yr-divider{height:1px;background:var(--border);margin:0 18px;}
+.accent-68{border-top:3px solid #dc2626;}
+.accent-67{border-top:3px solid #7c3aed;}
+.accent-66{border-top:3px solid #0891b2;}
+@media(max-width:768px){.db-years{grid-template-columns:1fr;}.db-summary{grid-template-columns:1fr;}}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:999;opacity:0;transform:translateY(12px);transition:all .25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-ov.show{display:flex;}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:480px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal h3{font-family:var(--font-h);font-size:1.1rem;color:var(--navy);margin-bottom:16px;}
+.modal-field{margin-bottom:14px;}
+.modal-field label{display:block;font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:5px;}
+.modal-field input,.modal-field select{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:7px;font-family:var(--font);font-size:.9rem;outline:none;}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--navy2);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+
+@media(max-width:768px){
+  .main{padding:14px 14px;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+  table{font-size:.8rem;}
+  td,th{padding:7px 8px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-inner">
+    <div class="hdr-logo">🏫</div>
+    <div class="hdr-title">
+      <h1>Dashboard ติดตามรายงานโครงการ</h1>
+      <p>โรงเรียนบ้านผึ้ง — ปีการศึกษา 2566 และ 2567</p>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn btn-yellow" onclick="exportExcel()">⬇️ Export Excel</button>
+      <button class="btn btn-red" onclick="resetConfirm()">🔄 รีเซ็ตข้อมูล</button>
+      <button class="lock-badge locked" id="lockBadge" onclick="lockBadgeClick()">🔒 ล็อกอยู่</button>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Stats -->
+  <div class="db-summary" id="db-summary"></div>
+  <div class="db-years" id="db-years"></div>
+
+  <!-- Progress -->
+  <div class="prog-wrap">
+    <div class="prog-title">
+      <span>📊 ความคืบหน้าการส่งรายงาน (รวมทุกปี)</span>
+      <span id="prog-text"></span>
+    </div>
+    <div class="prog-bar">
+      <div class="prog-fill" id="prog-fill" style="width:0%">
+        <span class="prog-pct" id="prog-pct"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-lbl">🔍</span>
+      <input class="filter-input" id="q" type="text" placeholder="ค้นหาชื่อโครงการ หรือชื่อครู..." oninput="renderTable()" style="width:260px">
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-lbl">ปี</span>
+      <select class="filter-input" id="fYear" onchange="renderTable()">
+        <option value="">ทั้งหมด</option>
+        <option value="2568">2568</option>
+        <option value="2567">2567</option>
+        <option value="2566">2566</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-lbl">สถานะ</span>
+      <select class="filter-input" id="fStatus" onchange="renderTable()">
+        <option value="">ทั้งหมด</option>
+        <option value="done">✅ ส่งแล้ว</option>
+        <option value="pend">⏳ ยังไม่ส่ง</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-lbl">ครู</span>
+      <select class="filter-input" id="fTeacher" onchange="renderTable()" style="max-width:200px">
+        <option value="">ทุกท่าน</option>
+      </select>
+    </div>
+    <span class="found-badge" id="foundBadge"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <span class="table-title" id="tableTitle">รายการโครงการทั้งหมด</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-green" onclick="markAllFiltered(true)" style="font-size:.78rem;padding:6px 12px">✅ ทำเครื่องหมายส่งแล้ว (ที่กรอง)</button>
+        <button class="btn btn-red" onclick="markAllFiltered(false)" style="font-size:.78rem;padding:6px 12px">✗ ยังไม่ส่ง (ที่กรอง)</button>
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px" class="center">#</th>
+            <th style="width:70px" class="center">เลขที่</th>
+            <th>ชื่อโครงการ / กิจกรรม</th>
+            <th style="width:170px">ผู้รับผิดชอบ</th>
+            <th style="width:90px" class="center">งบประมาณ</th>
+            <th style="width:50px" class="center">ปี</th>
+            <th style="width:110px" class="center">สถานะ</th>
+            <th style="width:130px" class="center">วันที่ส่ง</th>
+            <th style="width:50px" class="center">✓</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="empty" style="display:none">
+      <div class="empty-ico">🔍</div>
+      <p>ไม่พบรายการที่ตรงกับเงื่อนไขที่เลือก</p>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+
+<!-- PIN Modal -->
+<div class="modal-ov" id="pinModal">
+  <div class="pin-modal" id="pinBox">
+    <h3>🔐 กรอกรหัสผ่าน</h3>
+    <p class="pin-sub">เพื่อแก้ไขข้อมูลในระบบ</p>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-numpad">
+      <button class="pin-btn" onclick="pinInput('1')">1</button>
+      <button class="pin-btn" onclick="pinInput('2')">2</button>
+      <button class="pin-btn" onclick="pinInput('3')">3</button>
+      <button class="pin-btn" onclick="pinInput('4')">4</button>
+      <button class="pin-btn" onclick="pinInput('5')">5</button>
+      <button class="pin-btn" onclick="pinInput('6')">6</button>
+      <button class="pin-btn" onclick="pinInput('7')">7</button>
+      <button class="pin-btn" onclick="pinInput('8')">8</button>
+      <button class="pin-btn" onclick="pinInput('9')">9</button>
+      <button class="pin-btn del" onclick="pinInput('cancel')">ยกเลิก</button>
+      <button class="pin-btn" onclick="pinInput('0')">0</button>
+      <button class="pin-btn del" onclick="pinInput('del')">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Modal -->
+<div class="modal-ov" id="resetModal">
+  <div class="modal">
+    <h3>⚠️ ยืนยันการรีเซ็ตข้อมูล</h3>
+    <p style="font-size:.9rem;color:var(--text2);margin-bottom:20px;">การรีเซ็ตจะล้างสถานะการส่งรายงานและวันที่ส่งทั้งหมด กลับไปเป็นข้อมูลเดิม ไม่สามารถย้อนกลับได้</p>
+    <div class="modal-actions">
+      <button class="btn btn-white" onclick="closeModal('resetModal')" style="border:1px solid var(--border2);color:var(--text)">ยกเลิก</button>
+      <button class="btn btn-red" onclick="doReset()">ยืนยันรีเซ็ต</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+//  MASTER DATA
+// ═══════════════════════════════════
+const MASTER = [
+  // ── ปี 2567 ──
+  {id:'67_01', yr:'2567', c:'1/67',  n:'โครงการส่งเสริมพัฒนาหลักสูตรสถานศึกษาและหลักสูตรท้องถิ่น',             t:'นางสาวนิภาพร คำเพราะ',        b:2000,    ok0:true,  p:''},
+  {id:'67_02', yr:'2567', c:'2/67',  n:'โครงการพัฒนาโสตทัศนูปกรณ์และ ICT เพื่อการศึกษา',                      t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม',  b:80000,   ok0:true,  p:''},
+  {id:'67_03', yr:'2567', c:'3/67',  n:'โครงการโรงเรียนคุณธรรม',                                                t:'นางสาวอรวรรณ บุญจันทร์',      b:5000,    ok0:true,  p:''},
+  {id:'67_04', yr:'2567', c:'4/67',  n:'โครงการพัฒนาระบบประกันคุณภาพภายในสถานศึกษาและมาตรฐานการศึกษา',       t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:3000,    ok0:true,  p:''},
+  {id:'67_05', yr:'2567', c:'5/67',  n:'โครงการวันสำคัญ (ว/ส/ปัจ/แม่)',                                         t:'นางสาวณัฎยา เงาศรี',          b:33000,   ok0:true,  p:''},
+  {id:'67_06', yr:'2567', c:'6/67',  n:'โครงการส่งเสริมศักยภาพผู้เรียนและการแข่งขันทักษะทางวิชาการ',           t:'นางสาวนิภาพร คำเพราะ',        b:50000,   ok0:true,  p:''},
+  {id:'67_07', yr:'2567', c:'7/67',  n:'โครงการสถานศึกษาสีขาว ปลอดยาเสพติดและอบายมุข',                        t:'นางสาวสุกัญญา ปัญญานนท์',     b:5000,    ok0:true,  p:''},
+  {id:'67_08', yr:'2567', c:'8/67',  n:'โครงการพัฒนาห้องเรียนคุณภาพ',                                           t:'นางนพมาศ นวลศิริ',            b:85000,   ok0:true,  p:''},
+  {id:'67_09', yr:'2567', c:'9/67',  n:'โครงการส่งเสริมการจัดการศึกษาปฐมวัย',                                   t:'นางนพมาศ นวลศิริ',            b:22000,   ok0:true,  p:''},
+  {id:'67_10', yr:'2567', c:'10/67', n:'โครงการพัฒนาคุณภาพวิชาการ',                                             t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:6000,    ok0:true,  p:''},
+  {id:'67_11', yr:'2567', c:'',      n:'กิจกรรมนิเทศภายใน',                                                     t:'นางสาวธิดารัตน์ ภูนามนา',     b:1000,    ok0:false, p:'โครงการพัฒนาคุณภาพวิชาการ'},
+  {id:'67_12', yr:'2567', c:'',      n:'กิจกรรมเปิดบ้านวิชาการ (Open House)',                                   t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:5000,    ok0:false, p:'โครงการพัฒนาคุณภาพวิชาการ'},
+  {id:'67_13', yr:'2567', c:'11/67', n:'โครงการพัฒนาระบบงานทะเบียนและการวัดการประเมินผล',                      t:'นางสาวสุกัญญา ปัญญานนท์',     b:10000,   ok0:true,  p:''},
+  {id:'67_14', yr:'2567', c:'12/67', n:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน',                                   t:'นางสาวณัฎยา เงาศรี',          b:171255,  ok0:true,  p:''},
+  {id:'67_15', yr:'2567', c:'',      n:'กิจกรรมลูกเสือโรงเรียน',                                                t:'นางสาวนิภาพร คำเพราะ',        b:20000,   ok0:false, p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน'},
+  {id:'67_16', yr:'2567', c:'',      n:'กิจกรรมกีฬาสัมพันธ์ (กีฬาสี,ตำบล,กลุ่ม,อำเภอ)',                     t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:23000,  ok0:false, p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน'},
+  {id:'67_17', yr:'2567', c:'',      n:'กิจกรรมเสริมประสบการณ์ออกสู่โลกกว้าง (ทัศนศึกษา)',                     t:'นางนพมาศ นวลศิริ',            b:100000,  ok0:false, p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน'},
+  {id:'67_18', yr:'2567', c:'',      n:'กิจกรรมชมรม/ลดเวลาเรียนเพิ่มเวลารู้',                                  t:'นางสาวณัฎยา เงาศรี',          b:25255,   ok0:false, p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน'},
+  {id:'67_19', yr:'2567', c:'',      n:'กิจกรรมแนะแนวทางการศึกษา',                                             t:'นางสาวสุกัญญา ปัญญานนท์',     b:3000,    ok0:false, p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน'},
+  {id:'67_20', yr:'2567', c:'13/67', n:'โครงการส่งเสริมการวิจัยและนวัตกรรมและการผลิตสื่อการเรียนรู้',           t:'นายถวัลย์ ถนัดทาง',           b:22000,   ok0:true,  p:''},
+  {id:'67_21', yr:'2567', c:'',      n:'กิจกรรมวิจัยในชั้นเรียน',                                               t:'นายถวัลย์ ถนัดทาง',           b:1000,    ok0:false, p:'โครงการส่งเสริมการวิจัยและนวัตกรรมฯ'},
+  {id:'67_22', yr:'2567', c:'',      n:'กิจกรรมการผลิตสื่อ',                                                    t:'นางสาวอรวรรณ บุญจันทร์',      b:15000,   ok0:false, p:'โครงการส่งเสริมการวิจัยและนวัตกรรมฯ'},
+  {id:'67_23', yr:'2567', c:'',      n:'กิจกรรมการเผยแพร่และแสดงผลงาน',                                        t:'นางสาวสุกัญญา ปัญญานนท์',     b:5000,    ok0:false, p:'โครงการส่งเสริมการวิจัยและนวัตกรรมฯ'},
+  {id:'67_24', yr:'2567', c:'',      n:'กิจกรรม 1 ครู 1 นวัตกรรม',                                             t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:1000,    ok0:false, p:'โครงการส่งเสริมการวิจัยและนวัตกรรมฯ'},
+  {id:'67_25', yr:'2567', c:'14/67', n:'โครงการเศรษฐกิจพอเพียงในสถานศึกษาและภูมิปัญญาท้องถิ่น',               t:'นางสาวณัฎยา เงาศรี',          b:5000,    ok0:true,  p:''},
+  {id:'67_26', yr:'2567', c:'15/67', n:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน',                                   t:'นางสาวนิภาพร คำเพราะ',        b:40000,   ok0:true,  p:''},
+  {id:'67_27', yr:'2567', c:'',      n:'กิจกรรมการวัดผลระดับชาติ',                                              t:'นางสาวนิภาพร คำเพราะ',        b:10000,   ok0:false, p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน'},
+  {id:'67_28', yr:'2567', c:'',      n:'กิจกรรมการสอนซ่อมเสริม',                                               t:'นางสาวธิดารัตน์ ภูนามนา',     b:5000,    ok0:false, p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน'},
+  {id:'67_29', yr:'2567', c:'',      n:'กิจกรรมส่งเสริมการอ่านและรักษ์ภาษาไทย',                               t:'นางสาวธิดารัตน์ ภูนามนา',     b:20000,   ok0:false, p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน'},
+  {id:'67_30', yr:'2567', c:'',      n:'กิจกรรมพัฒนาทักษะภาษาและภาษาอังกฤษเพื่อการสื่อสาร',                  t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:5000,    ok0:false, p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน'},
+  {id:'67_31', yr:'2567', c:'16/67', n:'โครงการพัฒนาคุณภาพการจัดการศึกษาเรียนรวม',                             t:'นางสาวอรวรรณ บุญจันทร์',      b:3000,    ok0:true,  p:''},
+  {id:'67_32', yr:'2567', c:'17/67', n:'โครงการบ้านนักวิทยาศาสตร์น้อย ปฐมวัย ประถมต้น',                        t:'นางมาลินี ทองแสน',            b:10000,   ok0:true,  p:''},
+  {id:'67_33', yr:'2567', c:'18/67', n:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน',                                   t:'นางมาลินี ทองแสน',            b:60000,   ok0:true,  p:''},
+  {id:'67_34', yr:'2567', c:'',      n:'กิจกรรมพัฒนาห้องสมุด',                                                  t:'นางสาวธิดารัตน์ ภูนามนา',     b:15000,   ok0:false, p:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน'},
+  {id:'67_35', yr:'2567', c:'',      n:'กิจกรรมพัฒนากลุ่มสาระการเรียนรู้',                                     t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:25000,   ok0:false, p:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน'},
+  {id:'67_36', yr:'2567', c:'',      n:'กิจกรรมพัฒนาแหล่งเรียนรู้',                                             t:'นางสาวนิภาพร คำเพราะ',        b:20000,   ok0:false, p:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน'},
+  {id:'67_37', yr:'2567', c:'19/67', n:'โครงการพัฒนาทักษะอาชีพและทักษะชีวิต',                                  t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:25000,   ok0:true,  p:''},
+  {id:'67_38', yr:'2567', c:'',      n:'กิจกรรมนักธุรกิจน้อยมีคุณธรรม นำสู่เศรษฐกิจสร้างสรรค์',               t:'นางสาวณัฎยา เงาศรี',          b:15000,   ok0:false, p:'โครงการพัฒนาทักษะอาชีพและทักษะชีวิต'},
+  {id:'67_39', yr:'2567', c:'',      n:'กิจกรรมร้านค้าสวัสดิ์การโรงเรียน',                                     t:'นางสาวสุกัญญา ปัญญานนท์',     b:0,       ok0:false, p:'โครงการพัฒนาทักษะอาชีพและทักษะชีวิต'},
+  {id:'67_40', yr:'2567', c:'',      n:'กิจกรรมยุวเกษตรกร สู่การพัฒนาอาชีพ',                                   t:'นางสาวอรวรรณ บุญจันทร์',      b:10000,   ok0:false, p:'โครงการพัฒนาทักษะอาชีพและทักษะชีวิต'},
+  {id:'67_41', yr:'2567', c:'20/67', n:'โครงการสร้างโอกาสสร้างทักษะชีวิต ศิลปะ ดนตรี นาฏศิลป์',               t:'นางมาลินี ทองแสน',            b:60000,   ok0:true,  p:''},
+  {id:'67_42', yr:'2567', c:'21/67', n:'โครงการบริหารจัดการจัดสรรอัตรากำลัง',                                   t:'นายถวัลย์ ถนัดทาง',           b:105000,  ok0:true,  p:''},
+  {id:'67_43', yr:'2567', c:'22/67', n:'โครงการส่งเสริมศักยภาพครูและบุคลากรทางการศึกษาเพื่อพัฒนาครูสู่มืออาชีพ',t:'นายถวัลย์ ถนัดทาง',         b:30000,   ok0:true,  p:''},
+  {id:'67_44', yr:'2567', c:'',      n:'กิจกรรมส่งเสริมความก้าวหน้าทางวิชาชีพและยกย่องเชิดชูเกียรติ',          t:'นางมาลินี ทองแสน',            b:45000,   ok0:false, p:'โครงการส่งเสริมศักยภาพครูฯ'},
+  {id:'67_45', yr:'2567', c:'',      n:'กิจกรรมประชุมอบรมศึกษาดูงานของคณะครูและบุคลากรทางการศึกษา',            t:'นางสาวณัฎยา เงาศรี',          b:20000,   ok0:false, p:'โครงการส่งเสริมศักยภาพครูฯ'},
+  {id:'67_46', yr:'2567', c:'',      n:'กิจกรรมสร้างขวัญและกำลังใจแก่บุคลากร',                                  t:'นางมาลินี ทองแสน',            b:5000,    ok0:false, p:'โครงการส่งเสริมศักยภาพครูฯ'},
+  {id:'67_47', yr:'2567', c:'23/67', n:'โครงการพัฒนาคณะกรรมการสถานศึกษา',                                       t:'นางสาวณัฎยา เงาศรี',          b:30000,   ok0:true,  p:''},
+  {id:'67_48', yr:'2567', c:'24/67', n:'กิจกรรมชุมชนแห่งการเรียนรู้ทางวิชาชีพ (PLC)',                          t:'นางสาวธิดารัตน์ ภูนามนา',     b:10000,   ok0:true,  p:''},
+  {id:'67_49', yr:'2567', c:'25/67', n:'โครงการโรงเรียนสุจริต',                                                 t:'นางสาวอรวรรณ บุญจันทร์',      b:7500,    ok0:true,  p:''},
+  {id:'67_50', yr:'2567', c:'26/67', n:'โครงการโรงเรียนส่งเสริมสุขภาพ',                                         t:'นางจันทร์มา ทำนุ',            b:20000,   ok0:true,  p:''},
+  {id:'67_51', yr:'2567', c:'',      n:'กิจกรรมสุขาน่าใช้',                                                     t:'นายสุริยา มนัสศิลา',          b:15000,   ok0:false, p:'โครงการโรงเรียนส่งเสริมสุขภาพ'},
+  {id:'67_52', yr:'2567', c:'',      n:'กิจกรรมผู้พิทักษ์ฟันดี',                                              t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:1000,   ok0:false, p:'โครงการโรงเรียนส่งเสริมสุขภาพ'},
+  {id:'67_53', yr:'2567', c:'',      n:'กิจกรรมปฐมพยาบาลและป้องกันโรค',                                        t:'นางจันทร์มา ทำนุ',            b:4000,    ok0:false, p:'โครงการโรงเรียนส่งเสริมสุขภาพ'},
+  {id:'67_54', yr:'2567', c:'27/67', n:'โครงการโรงเรียนปลอดภัย',                                               t:'นางสาวอรวรรณ บุญจันทร์',      b:10000,   ok0:true,  p:''},
+  {id:'67_55', yr:'2567', c:'28/67', n:'โครงการพัฒนาระบบดูแลช่วยเหลือนักเรียน',                                t:'นางสาวณัฎยา เงาศรี',          b:4500,    ok0:true,  p:''},
+  {id:'67_56', yr:'2567', c:'',      n:'กิจกรรมเด็กดีมีเงินออม',                                                t:'นายมานิตย์ เงาศรี',           b:500,     ok0:false, p:'โครงการพัฒนาระบบดูแลช่วยเหลือนักเรียน'},
+  {id:'67_57', yr:'2567', c:'',      n:'กิจกรรมประชาธิปไตยในโรงเรียนและสภานักเรียน',                           t:'นายสุริยา มนัสศิลา',          b:1000,    ok0:false, p:'โครงการพัฒนาระบบดูแลช่วยเหลือนักเรียน'},
+  {id:'67_58', yr:'2567', c:'',      n:'กิจกรรมเยี่ยมบ้านนักเรียน',                                             t:'นางสาวณัฎยา เงาศรี',          b:3000,    ok0:false, p:'โครงการพัฒนาระบบดูแลช่วยเหลือนักเรียน'},
+  {id:'67_59', yr:'2567', c:'29/67', n:'โครงการโรงเรียนปลอดขยะ',                                               t:'นางสาวนิภาพร คำเพราะ',        b:5000,    ok0:true,  p:''},
+  {id:'67_60', yr:'2567', c:'30/67', n:'โครงการโรงเรียนอีโคสคูล (Eco School)',                                  t:'นางสาวสุกัญญา ปัญญานนท์',     b:3000,    ok0:true,  p:''},
+  {id:'67_61', yr:'2567', c:'31/67', n:'โครงการสานสัมพันธ์ชุมชน',                                              t:'นางจันทร์มา ทำนุ',            b:10000,   ok0:true,  p:''},
+  {id:'67_62', yr:'2567', c:'',      n:'กิจกรรมประชุมผู้ปกครอง',                                               t:'นางจันทร์มา ทำนุ',            b:5000,    ok0:false, p:'โครงการสานสัมพันธ์ชุมชน'},
+  {id:'67_63', yr:'2567', c:'',      n:'กิจกรรมประชุมกรรมการสถานศึกษา',                                        t:'นางจันทร์มา ทำนุ',            b:2000,    ok0:false, p:'โครงการสานสัมพันธ์ชุมชน'},
+  {id:'67_64', yr:'2567', c:'',      n:'กิจกรรมชุมชน',                                                         t:'นางจันทร์มา ทำนุ',            b:3000,    ok0:false, p:'โครงการสานสัมพันธ์ชุมชน'},
+  {id:'67_65', yr:'2567', c:'32/67', n:'โครงการพัฒนาระบบการบริหารจัดการการศึกษา',                              t:'นายถวัลย์ ถนัดทาง',           b:5000,    ok0:true,  p:''},
+  {id:'67_66', yr:'2567', c:'',      n:'กิจกรรมพัฒนาคุณภาพงาน 4 ฝ่าย',                                        t:'นางจันทร์มา ทำนุ',            b:3000,    ok0:false, p:'โครงการพัฒนาระบบการบริหารจัดการการศึกษา'},
+  {id:'67_67', yr:'2567', c:'',      n:'กิจกรรมส่งเสริมพัฒนากลุ่มเครือข่าย',                                  t:'นางจันทร์มา ทำนุ',            b:2000,    ok0:false, p:'โครงการพัฒนาระบบการบริหารจัดการการศึกษา'},
+  {id:'67_68', yr:'2567', c:'33/67', n:'โครงการประชาสัมพันธ์โรงเรียนบ้านผึ้ง',                                 t:'นางสาวรัชวดี สายเสน',         b:1000,    ok0:true,  p:''},
+  {id:'67_69', yr:'2567', c:'34/67', n:'โครงการพัฒนางานสารบรรณและงานปฏิคม',                                    t:'นางสาวรัชวดี สายเสน',         b:10000,   ok0:true,  p:''},
+  {id:'67_70', yr:'2567', c:'35/67', n:'โครงการพัฒนาอาคารสถานที่จัดการเรียนรู้',                             t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:50000,  ok0:false, p:''},
+  {id:'67_71', yr:'2567', c:'36/67', n:'โครงการอาหารกลางวันและโภชนาการ',                                       t:'นางสาวธิดารัตน์ ภูนามนา',     b:1075200, ok0:true,  p:''},
+  {id:'67_72', yr:'2567', c:'37/67', n:'โครงการจัดทำแผนพัฒนาคุณภาพการศึกษาและแผนปฏิบัติการประจำปี',           t:'นางสาวสุกัญญา ปัญญานนท์',     b:1000,    ok0:true,  p:''},
+  {id:'67_73', yr:'2567', c:'38/67', n:'โครงการพัฒนางานการเงิน บัญชีและพัสดุ',                                 t:'นางนพมาศ นวลศิริ',            b:1000,    ok0:true,  p:''},
+  {id:'67_74', yr:'2567', c:'39/67', n:'โครงการจัดหาและซ่อมบำรุง วัสดุ อุปกรณ์ ครุภัณฑ์',                   t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:10000,  ok0:true,  p:''},
+  {id:'67_75', yr:'2567', c:'40/67', n:'โครงการวัสดุสำนักงาน',                                                 t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:100000,  ok0:true,  p:''},
+  {id:'67_76', yr:'2567', c:'42/67', n:'โครงการเรียนฟรี 15 ปี อย่างมีคุณภาพ',                                  t:'นางสาวนิภาพร คำเพราะ',        b:459005,  ok0:true,  p:''},
+  {id:'67_77', yr:'2567', c:'43/67', n:'โครงการตรวจสอบภายในและการบริหารความเสี่ยง',                             t:'นางนพมาศ นวลศิริ',            b:0,       ok0:true,  p:''},
+  {id:'67_78', yr:'2567', c:'44/67', n:'โครงการพัฒนาระบบสาธารณูปโภค',                                          t:'นางนพมาศ นวลศิริ',            b:179364,  ok0:true,  p:''},
+    // ── ปี 2568 ──
+{id:'68_001', yr:'2568', c:'1/68', n:'โครงการส่งเสริมพัฒนาหลักสูตรสถานศึกษาและหลักสูตรท้องถิ่น', p:'', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:2000, ok0:false},
+  {id:'68_002', yr:'2568', c:'2/68', n:'โครงการงานประกันคุณภาพสถานศึกษา', p:'', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:3500, ok0:false},
+  {id:'68_003', yr:'2568', c:'3/68', n:'โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้', p:'', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:22000, ok0:false},
+  {id:'68_004', yr:'2568', c:'', n:'กิจกรรมพัฒนาระบบงานวิชาการ', p:'โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:1000, ok0:false},
+  {id:'68_005', yr:'2568', c:'', n:'กิจกรรมเปิดบ้านวิชาการ', p:'โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:6000, ok0:false},
+  {id:'68_006', yr:'2568', c:'', n:'กิจกรรมพัฒนากลุ่มสาระการเรียนรู้', p:'โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:15000, ok0:false},
+  {id:'68_007', yr:'2568', c:'4/68', n:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน', p:'', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:17000, ok0:false},
+  {id:'68_008', yr:'2568', c:'', n:'กิจกรรมพัฒนาการประเมินระดับชาติ', p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน', t:'นางสุมิตรา ลิ้มสุวัฒน์', b:10000, ok0:false},
+  {id:'68_009', yr:'2568', c:'', n:'กิจกรรมส่งเสริมการอ่านและรักษ์ภาษาไทย', p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน', t:'นางสาววิจิตรา ไชยพิมพ์', b:3000, ok0:false},
+  {id:'68_010', yr:'2568', c:'', n:'กิจกรรมพัฒนาทักษะภาษาและภาษาอังกฤษเพื่อการสื่อสาร', p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน', t:'นายปรมินทร์ ทาเสนาะ', b:3000, ok0:false},
+  {id:'68_011', yr:'2568', c:'', n:'กิจกรรมสอนซ่อมเสริม', p:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน', t:'นางสาววิจิตรา ไชยพิมพ์', b:1000, ok0:false},
+  {id:'68_012', yr:'2568', c:'5/68', n:'โครงการโรงเรียนคุณธรรม', p:'', t:'นางสาวเพ็ญนภา วันทอง', b:6500, ok0:false},
+  {id:'68_013', yr:'2568', c:'', n:'กิจกรรมค่ายคุณธรรม', p:'โครงการโรงเรียนคุณธรรม', t:'นางสาวเพ็ญนภา วันทอง', b:3000, ok0:false},
+  {id:'68_014', yr:'2568', c:'', n:'กิจกรรมโครงงานคุณธรรม', p:'โครงการโรงเรียนคุณธรรม', t:'นางสาวเพ็ญนภา วันทอง', b:3500, ok0:false},
+  {id:'68_015', yr:'2568', c:'6/68', n:'โครงการส่งเสริมการวิจัย นวัตกรรมและสื่อการเรียนรู้', p:'', t:'นางสาวเพ็ญนภา วันทอง', b:20000, ok0:false},
+  {id:'68_016', yr:'2568', c:'', n:'กิจกรรม 1 ครู 1 นวัตกรรม', p:'โครงการส่งเสริมการวิจัย นวัตกรรมและสื่อการเรียนรู้', t:'นางสาวเพ็ญนภา วันทอง', b:1000, ok0:false},
+  {id:'68_017', yr:'2568', c:'', n:'กิจกรรมผลิตสื่อการเรียนรู้', p:'โครงการส่งเสริมการวิจัย นวัตกรรมและสื่อการเรียนรู้', t:'นางสาวเพ็ญนภา วันทอง', b:15000, ok0:false},
+  {id:'68_018', yr:'2568', c:'', n:'กิจกรรมเผยแพร่และแสดงผลงาน', p:'โครงการส่งเสริมการวิจัย นวัตกรรมและสื่อการเรียนรู้', t:'นางสาวเพ็ญนภา วันทอง', b:3000, ok0:false},
+  {id:'68_019', yr:'2568', c:'', n:'กิจกรรมวิจัยในชั้นเรียน', p:'โครงการส่งเสริมการวิจัย นวัตกรรมและสื่อการเรียนรู้', t:'นางสาวเพ็ญนภา วันทอง', b:1000, ok0:false},
+  {id:'68_020', yr:'2568', c:'7/68', n:'โครงการโรงเรียนสุจริต', p:'', t:'นางสาวเพ็ญนภา วันทอง', b:1000, ok0:false},
+  {id:'68_021', yr:'2568', c:'8/68', n:'โครงการแนะแนว ตามน้องกลับมาเรียน', p:'', t:'นางสาวเพ็ญนภา วันทอง', b:1000, ok0:false},
+  {id:'68_022', yr:'2568', c:'', n:'กิจกรรมตามน้องกลับมาเรียน', p:'โครงการแนะแนว ตามน้องกลับมาเรียน', t:'นางสาวเพ็ญนภา วันทอง', b:500, ok0:false},
+  {id:'68_023', yr:'2568', c:'', n:'กิจกรรมแนะแนว', p:'โครงการแนะแนว ตามน้องกลับมาเรียน', t:'นางสาวเพ็ญนภา วันทอง', b:500, ok0:false},
+  {id:'68_024', yr:'2568', c:'9/68', n:'โครงการส่งเสริมศักยภาพผู้เรียนและการแข่งขันทักษะวิชาการ', p:'', t:'นางสาวธิดารัตน์ ภูนามนา', b:70000, ok0:false},
+  {id:'68_025', yr:'2568', c:'', n:'กิจกรรมแข่งขันทักษะวิชาการ', p:'โครงการส่งเสริมศักยภาพผู้เรียนและการแข่งขันทักษะวิชาการ', t:'นางสาวธิดารัตน์ ภูนามนา', b:60000, ok0:false},
+  {id:'68_026', yr:'2568', c:'', n:'กิจกรรมส่งเสริมศักยภาพผู้เรียน', p:'โครงการส่งเสริมศักยภาพผู้เรียนและการแข่งขันทักษะวิชาการ', t:'นางสาวธิดารัตน์ ภูนามนา', b:10000, ok0:false},
+  {id:'68_027', yr:'2568', c:'10/68', n:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน', p:'', t:'นางสาวธิดารัตน์ ภูนามนา', b:125000, ok0:false},
+  {id:'68_028', yr:'2568', c:'', n:'กิจกรรมชมรม', p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน', t:'นางสาวธิดารัตน์ ภูนามนา', b:15000, ok0:false},
+  {id:'68_029', yr:'2568', c:'', n:'กิจกรรมทัศนศึกษาเรียนรู้สู่โลกกว้าง', p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน', t:'นางสาวธิดารัตน์ ภูนามนา', b:100000, ok0:false},
+  {id:'68_030', yr:'2568', c:'', n:'กิจกรรมศาสตร์พระราชา', p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน', t:'นางสาวธิดารัตน์ ภูนามนา', b:5000, ok0:false},
+  {id:'68_031', yr:'2568', c:'', n:'กิจกรรม Spot Day', p:'โครงการส่งเสริมกิจกรรมพัฒนาผู้เรียน', t:'นางสาวธิดารัตน์ ภูนามนา', b:5000, ok0:false},
+  {id:'68_032', yr:'2568', c:'11/68', n:'โครงการพัฒนาส่งเสริมนักเรียนเรียนรวม', p:'', t:'นางสาวธิดารัตน์ ภูนามนา', b:2000, ok0:false},
+  {id:'68_033', yr:'2568', c:'', n:'กิจกรรมจัดทำแผน IEP', p:'โครงการพัฒนาส่งเสริมนักเรียนเรียนรวม', t:'นางสาวธิดารัตน์ ภูนามนา', b:2000, ok0:false},
+  {id:'68_034', yr:'2568', c:'12/68', n:'โครงการนิเทศภายใน', p:'', t:'นางสาวธิดารัตน์ ภูนามนา', b:1000, ok0:false},
+  {id:'68_035', yr:'2568', c:'13/68', n:'โครงการจัดทำแผนพัฒนาคุณภาพการศึกษา', p:'', t:'นางสาวสุกัญญา ปัญญานนท์', b:1000, ok0:false},
+  {id:'68_036', yr:'2568', c:'14/68', n:'โครงการพัฒนาระบบงานทะเบียน ระบบวัดผลและประเมินผลการศึกษา', p:'', t:'นางสาวสุกัญญา ปัญญานนท์', b:15000, ok0:false},
+  {id:'68_037', yr:'2568', c:'15/68', n:'โครงการพัฒนางานสหกรณ์โรงเรียน', p:'', t:'นางสาวสุกัญญา ปัญญานนท์', b:3000, ok0:false},
+  {id:'68_038', yr:'2568', c:'16/68', n:'โครงการส่งเสริมศิลปะนาฏศิลป์วัฒนธรรมไทยและภูมิปัญญาท้องถิ่น', p:'', t:'นางมาลินี ทองแสน', b:30000, ok0:false},
+  {id:'68_039', yr:'2568', c:'17/68', n:'โครงการห้องเรียนพหุปัญญา', p:'', t:'นายถวัลย์ ถนัดทาง', b:95000, ok0:false},
+  {id:'68_040', yr:'2568', c:'18/68', n:'โครงการเรียนดีเรียนฟรีอย่างมีคุณภาพ', p:'', t:'นางสาวนิภาพร คำเพราะ', b:461032, ok0:false},
+  {id:'68_041', yr:'2568', c:'19/68', n:'โครงการขับเคลื่อนการพัฒนาสมรรถนะผู้เรียนตามมาตรฐานสากล PISA', p:'', t:'นางสาวนิภาพร คำเพราะ', b:3000, ok0:false},
+  {id:'68_042', yr:'2568', c:'20/68', n:'โครงการห้องเรียนคุณภาพ', p:'', t:'นางสาวนิภาพร คำเพราะ', b:65000, ok0:false},
+  {id:'68_043', yr:'2568', c:'21/68', n:'โครงการพัฒนาทักษะศิลปะดนตรีกีฬา', p:'', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:58000, ok0:false},
+  {id:'68_044', yr:'2568', c:'', n:'กิจกรรมกีฬาสัมพันธ์', p:'โครงการพัฒนาทักษะศิลปะดนตรีกีฬา', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:30000, ok0:false},
+  {id:'68_045', yr:'2568', c:'', n:'กิจกรรมทัศนศิลป์', p:'โครงการพัฒนาทักษะศิลปะดนตรีกีฬา', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:3000, ok0:false},
+  {id:'68_046', yr:'2568', c:'', n:'กิจกรรมพัฒนาดนตรีและดุริยางค์', p:'โครงการพัฒนาทักษะศิลปะดนตรีกีฬา', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:20000, ok0:false},
+  {id:'68_047', yr:'2568', c:'', n:'กิจกรรมส่งเสริมกีฬาฟุตบอล', p:'โครงการพัฒนาทักษะศิลปะดนตรีกีฬา', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:5000, ok0:false},
+  {id:'68_048', yr:'2568', c:'22/68', n:'โครงการพัฒนากิจกรรมลูกเสือเนตรนารี', p:'', t:'นายปรมินทร์ ทาเสนาะ', b:30000, ok0:false},
+  {id:'68_049', yr:'2568', c:'23/68', n:'โครงการส่งเสริมการจัดการศึกษาปฐมวัย', p:'', t:'นางนพมาศ นวลศิริ', b:22000, ok0:false},
+  {id:'68_050', yr:'2568', c:'24/68', n:'โครงการบ้านวิทยาศาสตร์น้อย (ปฐมวัย)', p:'', t:'นางนพมาศ นวลศิริ', b:3000, ok0:false},
+  {id:'68_051', yr:'2568', c:'25/68', n:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน', p:'', t:'นางสาววิจิตรา ไชยพิมพ์', b:60000, ok0:false},
+  {id:'68_052', yr:'2568', c:'', n:'กิจกรรมพัฒนาห้องสมุด', p:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน', t:'นางสาววิจิตรา ไชยพิมพ์', b:10000, ok0:false},
+  {id:'68_053', yr:'2568', c:'', n:'กิจกรรมพัฒนาแหล่งเรียนรู้บูรณาการ', p:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน', t:'นางสาววิจิตรา ไชยพิมพ์', b:30000, ok0:false},
+  {id:'68_054', yr:'2568', c:'', n:'กิจกรรมพัฒนาห้องปฏิบัติการวิทยาศาสตร์', p:'โครงการพัฒนาแหล่งเรียนรู้ในโรงเรียน', t:'นางสาวสุกัญญา ปัญญานนท์', b:20000, ok0:false},
+  {id:'68_055', yr:'2568', c:'26/68', n:'โครงการบ้านนักวิทยาศาสตร์น้อย (ประถมศึกษา)', p:'', t:'นางสาววิจิตรา ไชยพิมพ์', b:5000, ok0:false},
+  {id:'68_056', yr:'2568', c:'27/68', n:'โครงการสถานศึกษาสีขาว ปลอดยาเสพติดและอบายมุข', p:'', t:'นางสาวสุกัญญา ปัญญานนท์', b:12000, ok0:false},
+  {id:'68_057', yr:'2568', c:'28/68', n:'โครงการระบบดูแลช่วยเหลือนักเรียน', p:'', t:'นางสาวณัฏยา เงาศรี', b:4500, ok0:false},
+  {id:'68_058', yr:'2568', c:'29/68', n:'โครงการวันสำคัญ', p:'', t:'นางสาวณัฏยา เงาศรี', b:37000, ok0:false},
+  {id:'68_059', yr:'2568', c:'', n:'วันไหว้ครู', p:'โครงการวันสำคัญ', t:'นางสาวนิภาพร คำเพราะ / ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:3000, ok0:false},
+  {id:'68_060', yr:'2568', c:'', n:'วันสุนทรภู่ วันภาษาไทย', p:'โครงการวันสำคัญ', t:'นางสาวธิดารัตน์ ภูนามนา / นางสาวอรวรรณ บุญจันทร์', b:3500, ok0:false},
+  {id:'68_061', yr:'2568', c:'', n:'วันสำคัญทางพุทธศาสนา', p:'โครงการวันสำคัญ', t:'นางสาวเพ็ญนภา วันทอง / นางสาวณัฏยา เงาศรี', b:2500, ok0:false},
+  {id:'68_062', yr:'2568', c:'', n:'วันแม่แห่งชาติ', p:'โครงการวันสำคัญ', t:'นางนพมาศ นวลศิริ / นางสาวสุดารัตน์ สร้อยสนธิ์', b:3500, ok0:false},
+  {id:'68_063', yr:'2568', c:'', n:'วันเฉลิมพระชนมพรรษา', p:'โครงการวันสำคัญ', t:'นางมาลินี ทองแสน / นางสาววิจิตรา ไชยพิมพ์', b:3500, ok0:false},
+  {id:'68_064', yr:'2568', c:'', n:'วันปัจฉิมนิเทศ', p:'โครงการวันสำคัญ', t:'นางสุมิตรา ลิ้มสุวัฒน์ / นางสาวสุดารัตน์ สร้อยสนธิ์', b:5000, ok0:false},
+  {id:'68_065', yr:'2568', c:'', n:'วันวิทยาศาสตร์', p:'โครงการวันสำคัญ', t:'นางสาวสุกัญญา ปัญญานนท์ / นายสุริยา มนัสศิลา', b:4000, ok0:false},
+  {id:'68_066', yr:'2568', c:'', n:'วันเด็กแห่งชาติ', p:'โครงการวันสำคัญ', t:'นางจันทร์มา ทำนุ / นางสาวธนันท์นภัส บุญค้ำ', b:4000, ok0:false},
+  {id:'68_067', yr:'2568', c:'', n:'วันสถาปนาลูกเสือไทย', p:'โครงการวันสำคัญ', t:'นายปรมินทร์ ทาเสนาะ / นายสุริยา มนัสศิลา', b:2000, ok0:false},
+  {id:'68_068', yr:'2568', c:'', n:'วันครู', p:'โครงการวันสำคัญ', t:'นางสาวนิภาพร คำเพราะ / นางสาวณัฏยา เงาศรี', b:3000, ok0:false},
+  {id:'68_069', yr:'2568', c:'', n:'วันสำคัญสากล', p:'โครงการวันสำคัญ', t:'นางสุมิตรา ลิ้มสุวัฒน์ / นายปรมินทร์ ทาเสนาะ', b:3000, ok0:false},
+  {id:'68_070', yr:'2568', c:'30/68', n:'โครงการพัฒนาสารสนเทศและสื่อสร้างสรรค์', p:'', t:'นางสาวสุดารัตน์ สร้อยสนธิ์', b:15000, ok0:false},
+  {id:'68_071', yr:'2568', c:'31/68', n:'โครงการประชาสัมพันธ์โรงเรียน', p:'', t:'นางสาวสุดารัตน์ สร้อยสนธิ์', b:2000, ok0:false},
+  {id:'68_072', yr:'2568', c:'32/68', n:'โครงการพัฒนาโสตทัศนูปกรณ์และเทคโนโลยีเพื่อการศึกษา', p:'', t:'นางสาวสุดารัตน์ สร้อยสนธิ์', b:60000, ok0:false},
+  {id:'68_073', yr:'2568', c:'33/68', n:'โครงการโรงเรียนปลอดขยะ', p:'', t:'นางสาวนิภาพร คำเพราะ', b:5000, ok0:false},
+  {id:'68_074', yr:'2568', c:'34/68', n:'โครงการส่งเสริมความประพฤติและวินัยนักเรียน', p:'', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:1500, ok0:false},
+  {id:'68_075', yr:'2568', c:'35/68', n:'โครงการพัฒนาอาคารสถานที่เพื่อการจัดการเรียนรู้', p:'', t:'นางจันทร์มา ทำนุ', b:60000, ok0:false},
+  {id:'68_076', yr:'2568', c:'', n:'กิจกรรมพัฒนาอาคารสถานที่เพื่อการจัดการเรียนรู้', p:'โครงการพัฒนาอาคารสถานที่เพื่อการจัดการเรียนรู้', t:'นางจันทร์มา ทำนุ', b:54000, ok0:false},
+  {id:'68_077', yr:'2568', c:'', n:'กิจกรรมสุขาดีมีความสุข', p:'โครงการพัฒนาอาคารสถานที่เพื่อการจัดการเรียนรู้', t:'นายสุริยา มนัสศิลา', b:6000, ok0:false},
+  {id:'68_078', yr:'2568', c:'36/68', n:'โครงการสานสัมพันธ์ชุมชนและเครือข่ายผู้ปกครอง', p:'', t:'นางจันทร์มา ทำนุ', b:7000, ok0:false},
+  {id:'68_079', yr:'2568', c:'37/68', n:'โครงการร่วมพัฒนาเครือข่ายคุณภาพการศึกษา', p:'', t:'นางจันทร์มา ทำนุ', b:5000, ok0:false},
+  {id:'68_080', yr:'2568', c:'38/68', n:'โครงการพัฒนาห้องพยาบาลปลอดภัย', p:'', t:'นางจันทร์มา ทำนุ', b:5000, ok0:false},
+  {id:'68_081', yr:'2568', c:'39/68', n:'โครงการโรงเรียนส่งเสริมสุขภาพ', p:'', t:'นางสาวธนันท์นภัส บุญค้ำ', b:10000, ok0:false},
+  {id:'68_082', yr:'2568', c:'', n:'กิจกรรมผู้พิทักษ์ฟันดี', p:'โครงการโรงเรียนส่งเสริมสุขภาพ', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:1000, ok0:false},
+  {id:'68_083', yr:'2568', c:'', n:'กิจกรรมอบรมส่งเสริมสุขภาพ', p:'โครงการโรงเรียนส่งเสริมสุขภาพ', t:'นางสาวธนันท์นภัส บุญค้ำ', b:2000, ok0:false},
+  {id:'68_084', yr:'2568', c:'', n:'กิจกรรมรณรงค์ป้องกันโรคติดต่อ', p:'โครงการโรงเรียนส่งเสริมสุขภาพ', t:'นางสาวธนันท์นภัส บุญค้ำ', b:1500, ok0:false},
+  {id:'68_085', yr:'2568', c:'', n:'กิจกรรมโรงอาหารถูกสุขลักษณะ', p:'โครงการโรงเรียนส่งเสริมสุขภาพ', t:'นางสาวธนันท์นภัส บุญค้ำ', b:5000, ok0:false},
+  {id:'68_086', yr:'2568', c:'', n:'กิจกรรมส่งเสริมสุขภาพทางกาย', p:'โครงการโรงเรียนส่งเสริมสุขภาพ', t:'นางสาวธนันท์นภัส บุญค้ำ', b:500, ok0:false},
+  {id:'68_087', yr:'2568', c:'40/68', n:'โครงการพัฒนาระบบสำนักงานและธุรการโรงเรียน', p:'', t:'นางสาวธนันท์นภัส บุญค้ำ', b:10000, ok0:false},
+  {id:'68_088', yr:'2568', c:'41/68', n:'โครงการอาหารกลางวันและโภชนาการ', p:'', t:'นางสาวธนันท์นภัส บุญค้ำ', b:1350800, ok0:false},
+  {id:'68_089', yr:'2568', c:'42/68', n:'โครงการสถานศึกษาปลอดภัย', p:'', t:'นางสาวอรวรรณ บุญจันทร์', b:10000, ok0:false},
+  {id:'68_090', yr:'2568', c:'', n:'กิจกรรมอบรมพัฒนาให้ความรู้', p:'โครงการสถานศึกษาปลอดภัย', t:'นางสาวอรวรรณ บุญจันทร์', b:3000, ok0:false},
+  {id:'68_091', yr:'2568', c:'', n:'กิจกรรมรณรงค์ป้องกัน', p:'โครงการสถานศึกษาปลอดภัย', t:'นางสาวอรวรรณ บุญจันทร์', b:2000, ok0:false},
+  {id:'68_092', yr:'2568', c:'', n:'กิจกรรมจัดหาวัสดุอุปกรณ์เพื่อลดความเสี่ยง', p:'โครงการสถานศึกษาปลอดภัย', t:'นางสาวอรวรรณ บุญจันทร์', b:4000, ok0:false},
+  {id:'68_093', yr:'2568', c:'', n:'กิจกรรมจราจรปลอดภัย', p:'โครงการสถานศึกษาปลอดภัย', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:1000, ok0:false},
+  {id:'68_094', yr:'2568', c:'43/68', n:'โครงการส่งเสริมทักษะอาชีพและยุวเกษตรกร', p:'', t:'นางสาวอรวรรณ บุญจันทร์', b:7000, ok0:false},
+  {id:'68_095', yr:'2568', c:'44/68', n:'โครงการงานปฏิคมและการต้อนรับ', p:'', t:'นางสาวอรวรรณ บุญจันทร์', b:10000, ok0:false},
+  {id:'68_096', yr:'2568', c:'45/68', n:'โครงการส่งเสริมกิจการนักเรียน', p:'', t:'นางสาวอรวรรณ บุญจันทร์', b:4000, ok0:false},
+  {id:'68_097', yr:'2568', c:'', n:'กิจกรรมส่งเสริมกิจกรรมนักเรียน', p:'โครงการส่งเสริมกิจการนักเรียน', t:'นางสาวอรวรรณ บุญจันทร์', b:2000, ok0:false},
+  {id:'68_098', yr:'2568', c:'', n:'กิจกรรมประชาธิปไตยในโรงเรียน', p:'โครงการส่งเสริมกิจการนักเรียน', t:'นายสุริยา มนัสศิลา', b:2000, ok0:false},
+  {id:'68_099', yr:'2568', c:'46/68', n:'โครงการอีโคสคูล', p:'', t:'นางสาววิจิตรา ไชยพิมพ์', b:5000, ok0:false},
+  {id:'68_100', yr:'2568', c:'47/68', n:'โครงการเศรษฐกิจพอเพียงในสถานศึกษาและภูมิปัญญาท้องถิ่น', p:'', t:'นายสุริยา มนัสศิลา', b:5000, ok0:false},
+  {id:'68_101', yr:'2568', c:'48/68', n:'โครงการจัดหาและซ่อมบำรุงวัสดุอุปกรณ์คุรุภัณฑ์ทางการศึกษา', p:'', t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:50000, ok0:false},
+  {id:'68_102', yr:'2568', c:'49/68', n:'โครงการวัสดุสำนักงาน', p:'', t:'นายปรมินทร์ ทาเสนาะ', b:60000, ok0:false},
+  {id:'68_103', yr:'2568', c:'50/68', n:'โครงการตรวจสอบภายในและบริหารความเสี่ยง', p:'', t:'นายปรมินทร์ ทาเสนาะ', b:1500, ok0:false},
+  {id:'68_104', yr:'2568', c:'51/68', n:'โครงการพัฒนาระบบสาธารณูปโภค', p:'', t:'นายปรมินทร์ ทาเสนาะ', b:50000, ok0:false},
+  {id:'68_105', yr:'2568', c:'52/68', n:'โครงการระดมทรัพยากรเพื่อการศึกษา', p:'', t:'นางนพมาศ นวลศิริ', b:10000, ok0:false},
+  {id:'68_106', yr:'2568', c:'53/68', n:'โครงการพัฒนางานงบประมาณ การเงินบัญชีและพัสดุ', p:'', t:'นางนพมาศ นวลศิริ', b:2000, ok0:false},
+  {id:'68_107', yr:'2568', c:'54/68', n:'โครงการสวัสดิการและขวัญกำลังใจบุคลากร', p:'', t:'นางมาลินี ทองแสน', b:35000, ok0:false},
+  {id:'68_108', yr:'2568', c:'55/68', n:'โครงการบริหารจัดการอัตรากำลัง', p:'', t:'นางมาลินี ทองแสน', b:132000, ok0:false},
+  {id:'68_109', yr:'2568', c:'56/68', n:'โครงการโรงเรียนประชารัฐ (Connext Ed)', p:'', t:'นางมาลินี ทองแสน', b:1000, ok0:false},
+  {id:'68_110', yr:'2568', c:'57/68', n:'โครงการส่งเสริมศักยภาพครูและบุคลากรทางการศึกษาสู่ครูมืออาชีพ', p:'', t:'นางสาวณัฏยา เงาศรี', b:55000, ok0:false},
+  {id:'68_111', yr:'2568', c:'', n:'กิจกรรมประชุมอบรมส่งเสริมศักยภาพครูและบุคลากรทางการศึกษา', p:'โครงการส่งเสริมศักยภาพครูและบุคลากรทางการศึกษาสู่ครูมืออาชีพ', t:'นางสาวณัฏยา เงาศรี', b:20000, ok0:false},
+  {id:'68_112', yr:'2568', c:'', n:'กิจกรรมศึกษาดูงาน', p:'โครงการส่งเสริมศักยภาพครูและบุคลากรทางการศึกษาสู่ครูมืออาชีพ', t:'นางสาวณัฏยา เงาศรี', b:35000, ok0:false},
+  {id:'68_113', yr:'2568', c:'58/68', n:'โครงการพัฒนาคณะกรรมการสถานศึกษา', p:'', t:'นางสาวณัฏยา เงาศรี', b:15000, ok0:false},
+  {id:'68_114', yr:'2568', c:'59/68', n:'โครงการกิจกรรมชุมชนแห่งการเรียนรู้ทางวิชาชีพ PLC', p:'', t:'นางสาวสุดารัตน์ สร้อยสนธิ์', b:4000, ok0:false},
+  {id:'68_115', yr:'2568', c:'60/68', n:'โครงการพัฒนาระบบการบริหารจัดการการศึกษา', p:'', t:'นายถวัลย์ ถนัดทาง', b:6000, ok0:false},
+// ── ปี 2566 ──
+  {id:'66_01', yr:'2566', c:'1/66',  n:'โครงการส่งเสริมพัฒนาหลักสูตรสถานศึกษาและหลักสูตรท้องถิ่น',             t:'นางสาวนิภาพร คำเพราะ',        b:1500,    ok0:true,  p:''},
+  {id:'66_02', yr:'2566', c:'2/66',  n:'โครงการเปิดบ้านวิชาการ (Open House)',                                   t:'นางรำไพ ถนัดทาง',             b:5000,    ok0:true,  p:''},
+  {id:'66_03', yr:'2566', c:'3/66',  n:'โครงการพัฒนาโสตทัศนูปกรณ์และ ICT เพื่อการศึกษา',                      t:'นางสาวนิภาพร คำเพราะ',        b:10000,   ok0:true,  p:''},
+  {id:'66_04', yr:'2566', c:'4/66',  n:'โครงการนักธุรกิจน้อยมีคุณธรรม นำสู่เศรษฐกิจสร้างสรรค์',               t:'นางสาวณัฏยา เงาศรี',          b:2000,    ok0:false, p:''},
+  {id:'66_05', yr:'2566', c:'5/66',  n:'โครงการนิเทศภายใน',                                                     t:'นางสาวธิดารัตน์ ภูนามนา',     b:1000,    ok0:true,  p:''},
+  {id:'66_06', yr:'2566', c:'6/66',  n:'โครงการพัฒนาระบบงานทะเบียนและการวัดการประเมินผล',                      t:'นางสาวสุกัญญา ปัญญานนท์',     b:2000,    ok0:true,  p:''},
+  {id:'66_07', yr:'2566', c:'7/66',  n:'โครงการเสริมสร้างคนดีบ้านผึ้ง โรงเรียนคุณธรรม สพฐ',                   t:'นายไกรษร ปักโคทะกัง',         b:10000,   ok0:true,  p:''},
+  {id:'66_08', yr:'2566', c:'8/66',  n:'โครงการพัฒนาระบบประกันคุณภาพภายในสถานศึกษาและมาตรฐานการศึกษา',       t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:1000,    ok0:false, p:''},
+  {id:'66_09', yr:'2566', c:'9/66',  n:'โครงการกีฬาสัมพันธ์ (กีฬาสี,ตำบล,กลุ่ม,อำเภอ)',                       t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:20000, ok0:true,  p:''},
+  {id:'66_10', yr:'2566', c:'10/66', n:'โครงการวันสำคัญ',                                                       t:'นายถวัลย์ ถนัดทาง',           b:18000,   ok0:true,  p:''},
+  {id:'66_11', yr:'2566', c:'11/66', n:'โครงการส่งเสริมการอ่านและพัฒนาห้องสมุดเพื่อการเรียนรู้',               t:'นางสาวธิดารัตน์ ภูนามนา',     b:6000,    ok0:true,  p:''},
+  {id:'66_12', yr:'2566', c:'12/66', n:'โครงการส่งเสริมศักยภาพผู้เรียนและการแข่งขันทักษะทางวิชาการ',           t:'นางรำไพ ถนัดทาง',             b:40000,   ok0:true,  p:''},
+  {id:'66_13', yr:'2566', c:'13/66', n:'โครงการสถานศึกษาสีขาว ปลอดยาเสพติดและอบายมุข',                        t:'นางสาวสุกัญญา ปัญญานนท์',     b:5000,    ok0:true,  p:''},
+  {id:'66_14', yr:'2566', c:'14/66', n:'โครงการลูกเสือโรงเรียน',                                                t:'นายไกรษร ปักโคทะกัง',         b:20000,   ok0:true,  p:''},
+  {id:'66_15', yr:'2566', c:'15/66', n:'โครงการพัฒนาห้องเรียนคุณภาพ',                                           t:'นางสาวณัฏยา เงาศรี',          b:73000,   ok0:true,  p:''},
+  {id:'66_16', yr:'2566', c:'16/66', n:'โครงการเศรษฐกิจพอเพียงในสถานศึกษาและภูมิปัญญาท้องถิ่น',               t:'นายพิเชฎฐ์ มุขขันธ์',         b:5000,    ok0:true,  p:''},
+  {id:'66_17', yr:'2566', c:'17/66', n:'โครงการเสริมประสบการณ์ออกสู่โลกกว้าง (ทัศนศึกษา)',                     t:'นางนพมาศ นวลศิริ',            b:110000,  ok0:true,  p:''},
+  {id:'66_18', yr:'2566', c:'18/66', n:'โครงการส่งเสริมการจัดการศึกษาปฐมวัย',                                   t:'นางนพมาศ นวลศิริ',            b:15000,   ok0:false, p:''},
+  {id:'66_19', yr:'2566', c:'19/66', n:'โครงการพัฒนาคุณภาพวิชาการ',                                             t:'นางรำไพ ถนัดทาง',             b:1000,    ok0:false, p:''},
+  {id:'66_20', yr:'2566', c:'20/66', n:'โครงการยุวเกษตรกรสู่การพัฒนาอาชีพ',                                    t:'นางรำไพ ถนัดทาง',             b:2000,    ok0:false, p:''},
+  {id:'66_21', yr:'2566', c:'21/66', n:'โครงการส่งเสริมนวัตกรรมและการผลิตสื่อการเรียนรู้',                     t:'นายถวัลย์ ถนัดทาง',           b:3000,    ok0:false, p:''},
+  {id:'66_22', yr:'2566', c:'22/66', n:'โครงการสอนซ่อมเสริม',                                                   t:'นางจันทร์มา ทำนุ',            b:1000,    ok0:false, p:''},
+  {id:'66_23', yr:'2566', c:'23/66', n:'โครงการพัฒนาห้องกิจกรรมนำชีวิตและกลุ่มสาระการเรียนรู้',               t:'นายมานิตย์ เงาศรี',           b:8000,    ok0:false, p:''},
+  {id:'66_24', yr:'2566', c:'24/66', n:'โครงการส่งเสริมการวิจัยและนวัตกรรมในชั้นเรียน',                        t:'นายมานิตย์ เงาศรี',           b:500,     ok0:false, p:''},
+  {id:'66_25', yr:'2566', c:'25/66', n:'โครงการยกระดับผลสัมฤทธิ์ทางการเรียน',                                   t:'นางสาวนิภาพร คำเพราะ',        b:5000,    ok0:true,  p:''},
+  {id:'66_26', yr:'2566', c:'26/66', n:'โครงการพัฒนาทักษะภาษาและภาษาอังกฤษเพื่อการสื่อสาร',                   t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:3000,    ok0:true,  p:''},
+  {id:'66_27', yr:'2566', c:'27/66', n:'โครงการสร้างโอกาสสร้างทักษะชีวิต ศิลปะ ดนตรี นาฏศิลป์',               t:'นางมาลินี ทองแสน',            b:10000,   ok0:false, p:''},
+  {id:'66_28', yr:'2566', c:'28/66', n:'โครงการพัฒนาคุณภาพการจัดการศึกษาเรียนร่วม',                             t:'นางมาลินี ทองแสน',            b:500,     ok0:false, p:''},
+  {id:'66_29', yr:'2566', c:'29/66', n:'โครงการบ้านนักวิทยาศาสตร์น้อย',                                         t:'นางมาลินี ทองแสน',            b:3000,    ok0:true,  p:''},
+  {id:'66_30', yr:'2566', c:'30/66', n:'โครงการรักษ์ภาษาไทย',                                                   t:'นางสาวสุทธาทิพย์ เงาศรี',     b:1000,    ok0:false, p:''},
+  {id:'66_31', yr:'2566', c:'31/66', n:'โครงการเรียนฟรี 15 ปี อย่างมีคุณภาพ',                                   t:'นางสาวนิภาพร คำเพราะ',        b:450234,  ok0:true,  p:''},
+  {id:'66_32', yr:'2566', c:'32/66', n:'โครงการบริหารจัดการจัดสรรอัตรากำลังในการจัดการเรียนรู้',               t:'นายถวัลย์ ถนัดทาง',           b:147000,  ok0:false, p:''},
+  {id:'66_33', yr:'2566', c:'33/66', n:'โครงการพัฒนาคุณภาพงานบุคลากร',                                         t:'นายไกรษร ปักโคทะกัง',         b:1000,    ok0:false, p:''},
+  {id:'66_34', yr:'2566', c:'34/66', n:'โครงการส่งเสริมศักยภาพครูและบุคลากรทางการศึกษาเพื่อพัฒนาสู่ครูมืออาชีพ',t:'นายไกรษร ปักโคทะกัง',       b:10000,   ok0:true,  p:''},
+  {id:'66_35', yr:'2566', c:'35/66', n:'โครงการสร้างขวัญและกำลังใจแก่บุคลากร',                                  t:'นางมาลินี ทองแสน',            b:5000,    ok0:true,  p:''},
+  {id:'66_36', yr:'2566', c:'36/66', n:'โครงการศึกษาดูงานของคณะครูและบุคลากรทางการศึกษาและคณะกรรมการสถานศึกษา',t:'นางสาวณัฏยา เงาศรี',          b:20000,   ok0:true,  p:''},
+  {id:'66_37', yr:'2566', c:'37/66', n:'โครงการส่งเสริมความก้าวหน้าทางวิชาชีพและยกย่องเชิดชูเกียรติ',          t:'นายถวัลย์ ถนัดทาง',           b:1000,    ok0:false, p:''},
+  {id:'66_38', yr:'2566', c:'38/66', n:'โครงการชุมชนแห่งการเรียนรู้ทางวิชาชีพ (PLC)',                          t:'นางเดือนเพ็ญ สุขรัตน์',       b:2500,    ok0:true,  p:''},
+  {id:'66_39', yr:'2566', c:'39/66', n:'โครงการโรงเรียนวิถีพุทธ วิถีธรรม',                                     t:'นางเดือนเพ็ญ สุขรัตน์',       b:1000,    ok0:true,  p:''},
+  {id:'66_40', yr:'2566', c:'40/66', n:'โครงการโรงเรียนสุจริต',                                                 t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:500,   ok0:false, p:''},
+  {id:'66_41', yr:'2566', c:'41/66', n:'โครงการโรงเรียนส่งเสริมสุขภาพ',                                         t:'นางจันทร์มา ทำนุ',            b:2000,    ok0:false, p:''},
+  {id:'66_42', yr:'2566', c:'42/66', n:'โครงการร้านค้าสวัสดิการโรงเรียนบ้านผึ้งฯ',                             t:'นางสาวสุกัญญา ปัญญานนท์',     b:0,       ok0:true,  p:''},
+  {id:'66_43', yr:'2566', c:'43/66', n:'โครงการพัฒนาคุณภาพงานบริหารทั่วไป',                                    t:'นายพิเชฎฐ์ มุขขันธ์',         b:1000,    ok0:true,  p:''},
+  {id:'66_44', yr:'2566', c:'44/66', n:'โครงการสานสายใย สานวัฒนธรรม สานสัมพันธ์ชุมชน',                        t:'นางเดือนเพ็ญ สุขรัตน์',       b:1000,    ok0:true,  p:''},
+  {id:'66_45', yr:'2566', c:'45/66', n:'โครงการโรงเรียนปลอดภัย',                                               t:'นางสาวธิดารัตน์ ภูนามนา',     b:3000,    ok0:true,  p:''},
+  {id:'66_46', yr:'2566', c:'46/66', n:'โครงการพัฒนาระบบดูแลช่วยเหลือนักเรียน',                                t:'นางสาวณัฏยา เงาศรี',          b:1000,    ok0:false, p:''},
+  {id:'66_47', yr:'2566', c:'47/66', n:'โครงการโรงเรียนปลอดขยะ',                                               t:'นางสาวนิภาพร คำเพราะ',        b:5000,    ok0:true,  p:''},
+  {id:'66_48', yr:'2566', c:'48/66', n:'โครงการอาหารกลางวันและโภชนาการ',                                       t:'นางสาวธิดารัตน์ ภูนามนา',     b:1092000, ok0:true,  p:''},
+  {id:'66_49', yr:'2566', c:'49/66', n:'โครงการประชาธิปไตยในโรงเรียนและสภานักเรียน',                           t:'นายสุริยา มนัสศิลา',          b:1000,    ok0:true,  p:''},
+  {id:'66_50', yr:'2566', c:'50/66', n:'โครงการพัฒนาระบบสาธารณูปโภค',                                          t:'นางนพมาศ นวลศิริ',            b:145000,  ok0:false, p:''},
+  {id:'66_51', yr:'2566', c:'51/66', n:'โครงการระดมทุนเพื่อการศึกษา',                                          t:'นางเดือนเพ็ญ สุขรัตน์',       b:1000,    ok0:true,  p:''},
+  {id:'66_52', yr:'2566', c:'52/66', n:'โครงการพัฒนาระบบการบริหารจัดการการศึกษา',                              t:'นางสาวธิดารัตน์ ภูนามนา',     b:1000,    ok0:true,  p:''},
+  {id:'66_53', yr:'2566', c:'53/66', n:'โครงการเด็กดีมีเงินออม',                                                t:'นายมานิตย์ เงาศรี',           b:0,       ok0:false, p:''},
+  {id:'66_54', yr:'2566', c:'54/66', n:'โครงการประชาสัมพันธ์โรงเรียนบ้านผึ้งฯ',                               t:'นางสาวรัชวดี สายเสน',         b:1000,    ok0:false, p:''},
+  {id:'66_55', yr:'2566', c:'55/66', n:'โครงการพัฒนางานสารบรรณและงานปฏิคม',                                    t:'นางสาวรัชวดี สายเสน',         b:5000,    ok0:false, p:''},
+  {id:'66_56', yr:'2566', c:'56/66', n:'โครงการสถานศึกษาน่าอยู่สะอาดปลอดภัย',                                 t:'นายพิเชฎฐ์ มุขขันธ์',         b:25000,   ok0:true,  p:''},
+  {id:'66_57', yr:'2566', c:'57/66', n:'โครงการส่งเสริมและพัฒนาเครือข่ายกลุ่มโรงเรียน',                        t:'นางจันทร์มา ทำนุ',            b:2000,    ok0:false, p:''},
+  {id:'66_58', yr:'2566', c:'58/66', n:'โครงการสุขาน่าใช้',                                                     t:'นางจันทร์มา ทำนุ',            b:2000,    ok0:false, p:''},
+  {id:'66_59', yr:'2566', c:'59/66', n:'โครงการตรวจสอบภายในและการบริหารความเสี่ยง',                             t:'นางรำไพ ถนัดทาง',             b:0,       ok0:false, p:''},
+  {id:'66_60', yr:'2566', c:'60/66', n:'โครงการผู้พิทักษ์ฟันดี',                                               t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:1000,  ok0:false, p:''},
+  {id:'66_61', yr:'2566', c:'61/66', n:'โครงการจัดทำแผนพัฒนาคุณภาพการศึกษาและแผนปฏิบัติการประจำปี',           t:'นางสาวสุกัญญา ปัญญานนท์',     b:1000,    ok0:false, p:''},
+  {id:'66_62', yr:'2566', c:'62/66', n:'โครงการแนะแนวทางการศึกษา',                                             t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:1000,    ok0:false, p:''},
+  {id:'66_63', yr:'2566', c:'63/66', n:'โครงการพัฒนางานการเงินและบัญชี',                                        t:'นางนพมาศ นวลศิริ',            b:1000,    ok0:false, p:''},
+  {id:'66_64', yr:'2566', c:'64/66', n:'โครงการพัฒนางานพัสดุ',                                                  t:'ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม', b:1000,  ok0:true,  p:''},
+  {id:'66_65', yr:'2566', c:'65/66', n:'โครงการจัดหาและซ่อมบำรุง วัสดุ อุปกรณ์ ครุภัณฑ์',                     t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:10000,   ok0:false, p:''},
+  {id:'66_66', yr:'2566', c:'66/66', n:'โครงการวัสดุสำนักงาน',                                                   t:'นางสุมิตรา ลิ้มสุวัฒน์',      b:45000,   ok0:true,  p:''},
+  {id:'66_67', yr:'2566', c:'67/66', n:'โครงการโรงเรียนอีโคสคูล (Eco School)',                                   t:'นางสาวสุกัญญา ปัญญานนท์',     b:1000,    ok0:true,  p:''},
+];
+
+// ═══════════════════════════════════
+//  STATE — localStorage
+// ═══════════════════════════════════
+const STORE_KEY = 'banphueng_project_status';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
+}
+function saveState(st) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(st));
+}
+function getStatus(id) {
+  const st = loadState();
+  if (st[id] === undefined) {
+    const m = MASTER.find(x => x.id === id);
+    return { ok: m ? m.ok0 : false, date: '' };
+  }
+  return st[id];
+}
+function setStatus(id, ok, date) {
+  const st = loadState();
+  st[id] = { ok, date: date || '' };
+  saveState(st);
+}
+
+// ═══════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════
+function fmtBudget(n) {
+  if (!n && n !== 0) return '-';
+  return n.toLocaleString('th-TH') + ' ฿';
+}
+
+function allItems() {
+  return MASTER.map(m => ({ ...m, ...getStatus(m.id) }));
+}
+
+// ═══════════════════════════════════
+//  STATS
+// ═══════════════════════════════════
+function renderStats() {
+  const items = allItems();
+  const total = items.length;
+  const done  = items.filter(x => x.ok).length;
+  const pend  = total - done;
+  const yr68  = items.filter(x => x.yr === '2568');
+  const yr67  = items.filter(x => x.yr === '2567');
+  const yr66  = items.filter(x => x.yr === '2566');
+  const d68 = yr68.filter(x => x.ok).length, p68 = yr68.length - d68;
+  const d67 = yr67.filter(x => x.ok).length, p67 = yr67.length - d67;
+  const d66 = yr66.filter(x => x.ok).length, p66 = yr66.length - d66;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const pct68d = yr68.length ? Math.round(d68/yr68.length*100) : 0;
+  const pct68p = yr68.length ? Math.round(p68/yr68.length*100) : 0;
+  const pct67d = yr67.length ? Math.round(d67/yr67.length*100) : 0;
+  const pct67p = yr67.length ? Math.round(p67/yr67.length*100) : 0;
+  const pct66d = yr66.length ? Math.round(d66/yr66.length*100) : 0;
+  const pct66p = yr66.length ? Math.round(p66/yr66.length*100) : 0;
+
+  document.getElementById('db-summary').innerHTML = `
+    <div class="db-summary-card" style="border-top-color:var(--navy);">
+      <div class="db-big-num" style="color:var(--navy);">${total}</div>
+      <div class="db-big-lbl">โครงการทั้งหมด (3 ปีรวม)</div>
+      <div class="db-big-sub">ปีการศึกษา 2566 · 2567 · 2568</div>
+    </div>
+    <div class="db-summary-card" style="border-top-color:var(--border2);">
+      <div class="db-split">
+        <div>
+          <div class="db-big-num" style="color:var(--green);">${done}</div>
+          <div class="db-big-lbl">ส่งแล้ว (รวม)</div>
+          <div class="db-big-sub">${pct}% ของทั้งหมด</div>
+        </div>
+        <div>
+          <div class="db-big-num" style="color:var(--red);">${pend}</div>
+          <div class="db-big-lbl">ยังไม่ส่ง (รวม)</div>
+          <div class="db-big-sub">${100-pct}% ของทั้งหมด</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const yrCards = [
+    {yr:'2568', cls:'accent-68', emoji:'📕', d:d68, p:p68, tot:yr68.length, pd:pct68d, pp:pct68p},
+    {yr:'2567', cls:'accent-67', emoji:'📘', d:d67, p:p67, tot:yr67.length, pd:pct67d, pp:pct67p},
+    {yr:'2566', cls:'accent-66', emoji:'📗', d:d66, p:p66, tot:yr66.length, pd:pct66d, pp:pct66p},
+  ];
+
+  document.getElementById('db-years').innerHTML = yrCards.map(c => `
+    <div class="yr-card ${c.cls}">
+      <div class="yr-head">
+        <div class="yr-head-label">${c.emoji} ปีการศึกษา ${c.yr}</div>
+        <div class="yr-head-total">รวม ${c.tot} รายการ</div>
+      </div>
+      <div class="yr-rows">
+        <div class="yr-row">
+          <div class="yr-icon icon-done">✓</div>
+          <div class="yr-info">
+            <div class="yr-lbl">ส่งแล้ว</div>
+            <div class="yr-num done">${c.d}</div>
+            <div class="yr-bar"><div class="yr-bar-fill fill-done" style="width:${c.pd}%"></div></div>
+            <div class="yr-pct">${c.pd}% ของปี ${c.yr}</div>
+          </div>
+        </div>
+        <div class="yr-divider"></div>
+        <div class="yr-row">
+          <div class="yr-icon icon-pend">✗</div>
+          <div class="yr-info">
+            <div class="yr-lbl">ยังไม่ส่ง</div>
+            <div class="yr-num pend">${c.p}</div>
+            <div class="yr-bar"><div class="yr-bar-fill fill-pend" style="width:${c.pp}%"></div></div>
+            <div class="yr-pct">${c.pp}% ของปี ${c.yr}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const pf = document.getElementById('prog-fill');
+  if(pf){ pf.style.width = pct + '%'; }
+  const pp = document.getElementById('prog-pct');
+  if(pp) pp.textContent = pct + '%';
+  const pt = document.getElementById('prog-text');
+  if(pt) pt.textContent = `ส่งแล้ว ${done} จาก ${total} รายการ`;
+}
+
+
+// ═══════════════════════════════════
+//  TEACHER FILTER
+// ═══════════════════════════════════
+function initTeacherFilter() {
+  const teachers = [...new Set(MASTER.map(m => m.t))].sort((a,b) => a.localeCompare(b,'th'));
+  const sel = document.getElementById('fTeacher');
+  teachers.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    sel.appendChild(o);
+  });
+}
+
+// ═══════════════════════════════════
+//  TABLE
+// ═══════════════════════════════════
+function getFiltered() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const fY = document.getElementById('fYear').value;
+  const fS = document.getElementById('fStatus').value;
+  const fT = document.getElementById('fTeacher').value;
+  return allItems().filter(x => {
+    if (fY && x.yr !== fY) return false;
+    if (fS === 'done' && !x.ok) return false;
+    if (fS === 'pend' && x.ok) return false;
+    if (fT && x.t !== fT) return false;
+    if (q && !x.n.toLowerCase().includes(q) && !x.t.toLowerCase().includes(q) && !x.c.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  const items = getFiltered();
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('emptyState');
+  const badge = document.getElementById('foundBadge');
+  const title = document.getElementById('tableTitle');
+
+  badge.textContent = `แสดง ${items.length} รายการ`;
+  title.textContent = `รายการโครงการ (${items.length} รายการ)`;
+
+  if (!items.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = items.map((x, i) => {
+    const statusBadge = x.ok
+      ? `<span class="status-badge status-done">✓ ส่งแล้ว</span>`
+      : `<span class="status-badge status-pend">✗ ยังไม่ส่ง</span>`;
+    const yrBadge = x.yr === '2568' ? `<span class="badge-yr badge-68">2568</span>` : x.yr === '2567' ? `<span class="badge-yr badge-67">2567</span>` : `<span class="badge-yr badge-66">2566</span>`;
+    const namePart = `<div class="td-name">${x.n}</div>${x.p ? `<div class="td-sub">↳ ${x.p}</div>` : ''}`;
+    const datePart = `<input class="date-input" type="date" value="${x.date||''}" onchange="onDateChange('${x.id}',this.value)" ${!x.ok?'disabled':''} title="วันที่ส่งรายงาน">`;
+    return `<tr class="${x.ok?'row-done':'row-pend'}" id="row_${x.id}">
+      <td class="center td-num">${i+1}</td>
+      <td class="center td-code">${x.c||'—'}</td>
+      <td>${namePart}</td>
+      <td class="td-teacher">${x.t}</td>
+      <td class="td-budget">${fmtBudget(x.b)}</td>
+      <td class="center">${yrBadge}</td>
+      <td class="center">${statusBadge}</td>
+      <td class="center">${datePart}</td>
+      <td class="center">
+        <div class="check-wrap">
+          <input class="chk" type="checkbox" id="chk_${x.id}" ${x.ok?'checked':''} onchange="onCheck('${x.id}',this.checked)">
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function _doCheck(id, checked) {
+  const cur = getStatus(id);
+  setStatus(id, checked, checked ? cur.date : '');
+  renderStats();
+  renderTable();
+  showToast(checked ? '✅ บันทึกสถานะ "ส่งแล้ว" เรียบร้อย' : '⏳ บันทึกสถานะ "ยังไม่ส่ง" เรียบร้อย');
+}
+function onCheck(id, checked) { requirePin(_doCheck, id, checked); }
+
+function _doDateChange(id, date) {
+  const cur = getStatus(id);
+  setStatus(id, cur.ok, date);
+}
+function onDateChange(id, date) { requirePin(_doDateChange, id, date); }
+
+function _doMarkAll(ok) {
+  const items = getFiltered();
+  items.forEach(x => setStatus(x.id, ok, ok ? getStatus(x.id).date : ''));
+  renderStats(); renderTable();
+  showToast(ok ? `✅ ทำเครื่องหมาย "${items.length} รายการ" เป็นส่งแล้ว` : `⏳ ทำเครื่องหมาย "${items.length} รายการ" เป็นยังไม่ส่ง`);
+}
+function markAllFiltered(ok) { requirePin(_doMarkAll, ok); }
+
+
+// ═══════════════════════════════════
+//  PIN LOCK SYSTEM
+// ═══════════════════════════════════
+const CORRECT_PIN = '1234';
+let isUnlocked = false;
+let pinBuffer = '';
+let pendingAction = null; // {fn, args}
+
+function updateLockBadge() {
+  const b = document.getElementById('lockBadge');
+  if (isUnlocked) {
+    b.className = 'lock-badge unlocked';
+    b.textContent = '🔓 ปลดล็อกอยู่';
+  } else {
+    b.className = 'lock-badge locked';
+    b.textContent = '🔒 ล็อกอยู่';
+  }
+}
+
+function lockBadgeClick() {
+  if (isUnlocked) {
+    // ล็อกทันที
+    isUnlocked = false;
+    updateLockBadge();
+    showToast('🔒 ล็อกระบบแล้ว');
+  } else {
+    // เปิด PIN modal เพื่อปลดล็อก (ไม่มี pending action)
+    pendingAction = {fn: 'unlock', args: []};
+    openPinModal();
+  }
+}
+
+function requirePin(fn, ...args) {
+  if (isUnlocked) { fn(...args); return; }
+  pendingAction = {fn, args};
+  openPinModal();
+}
+
+function openPinModal() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pinErr').textContent = '';
+  document.getElementById('pinModal').classList.add('show');
+}
+
+function closePinModal() {
+  pinBuffer = '';
+  document.getElementById('pinModal').classList.remove('show');
+  pendingAction = null;
+}
+
+function updatePinDots() {
+  for (let i=0; i<4; i++) {
+    document.getElementById('d'+i).className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  }
+}
+
+function pinInput(val) {
+  if (val === 'cancel') { closePinModal(); return; }
+  if (val === 'del') { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); return; }
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += val;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(() => checkPin(), 150);
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === CORRECT_PIN) {
+    isUnlocked = true;
+    updateLockBadge();
+    document.getElementById('pinModal').classList.remove('show');
+    if (pendingAction) {
+      const {fn, args} = pendingAction;
+      pendingAction = null;
+      if (fn === 'unlock') {
+        showToast('🔓 ปลดล็อกสำเร็จ — แก้ไขข้อมูลได้แล้ว');
+      } else {
+        fn(...args);
+      }
+    }
+    pinBuffer = '';
+  } else {
+    // PIN ผิด
+    pinBuffer = '';
+    updatePinDots();
+    const err = document.getElementById('pinErr');
+    err.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+    document.getElementById('pinBox').classList.add('pin-shake');
+    setTimeout(() => {
+      document.getElementById('pinBox').classList.remove('pin-shake');
+      err.textContent = '';
+    }, 600);
+  }
+}
+
+// Keyboard support for PIN
+document.addEventListener('keydown', e => {
+  const modal = document.getElementById('pinModal');
+  if (!modal.classList.contains('show')) return;
+  if (e.key >= '0' && e.key <= '9') pinInput(e.key);
+  else if (e.key === 'Backspace') pinInput('del');
+  else if (e.key === 'Escape') pinInput('cancel');
+});
+
+// ═══════════════════════════════════
+//  EXPORT EXCEL
+// ═══════════════════════════════════
+function exportExcel() {
+  const items = allItems();
+  const ws_data = [
+    ['ที่','เลขที่โครงการ','ชื่อโครงการ/กิจกรรม','โครงการหลัก (ถ้าเป็นกิจกรรมย่อย)','ผู้รับผิดชอบ','งบประมาณ (บาท)','ปีการศึกษา','สถานะ','วันที่ส่ง']
+  ];
+  items.forEach((x,i) => {
+    ws_data.push([
+      i+1, x.c||'', x.n, x.p||'', x.t,
+      x.b, x.yr,
+      x.ok ? 'ส่งแล้ว' : 'ยังไม่ส่ง',
+      x.date || ''
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: ข้อมูลทั้งหมด
+  const ws1 = XLSX.utils.aoa_to_sheet(ws_data);
+  ws1['!cols'] = [{wch:5},{wch:10},{wch:55},{wch:45},{wch:25},{wch:15},{wch:10},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'รายการทั้งหมด');
+
+  // Sheet 2: ยังไม่ส่ง
+  const pend = items.filter(x => !x.ok);
+  const ws2_data = [['ที่','เลขที่','ชื่อโครงการ/กิจกรรม','โครงการหลัก','ผู้รับผิดชอบ','งบประมาณ','ปี']];
+  pend.forEach((x,i) => ws2_data.push([i+1,x.c||'',x.n,x.p||'',x.t,x.b,x.yr]));
+  const ws2 = XLSX.utils.aoa_to_sheet(ws2_data);
+  ws2['!cols'] = [{wch:5},{wch:10},{wch:55},{wch:45},{wch:25},{wch:15},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'ยังไม่ส่งรายงาน');
+
+  // Sheet 3: ส่งแล้ว
+  const done = items.filter(x => x.ok);
+  const ws3_data = [['ที่','เลขที่','ชื่อโครงการ/กิจกรรม','ผู้รับผิดชอบ','งบประมาณ','ปี','วันที่ส่ง']];
+  done.forEach((x,i) => ws3_data.push([i+1,x.c||'',x.n,x.t,x.b,x.yr,x.date||'']));
+  const ws3 = XLSX.utils.aoa_to_sheet(ws3_data);
+  ws3['!cols'] = [{wch:5},{wch:10},{wch:55},{wch:25},{wch:15},{wch:8},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'ส่งรายงานแล้ว');
+
+  const d = new Date();
+  const fname = `รายงานโครงการ_บ้านผึ้ง_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showToast('⬇️ Export Excel เรียบร้อยแล้ว');
+}
+
+// ═══════════════════════════════════
+//  RESET
+// ═══════════════════════════════════
+function resetConfirm() { requirePin(() => document.getElementById('resetModal').classList.add('show')); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function doReset() {
+  localStorage.removeItem(STORE_KEY);
+  closeModal('resetModal');
+  renderStats(); renderTable();
+  showToast('🔄 รีเซ็ตข้อมูลเรียบร้อยแล้ว');
+}
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal('resetModal'); closePinModal(); } });
+initTeacherFilter();
+renderStats();
+renderTable();
+updateLockBadge();
+</script>
+</body>
+</html>
