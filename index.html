@@ -7,8 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        .header-bg { background-color: #000080; } /* Navy Blue */
-        /* Custom Scrollbar for Table */
+        .header-bg { background-color: #000080; }
         ::-webkit-scrollbar { height: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -16,14 +15,12 @@
 </head>
 <body class="bg-slate-50 font-sans relative">
 
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-white/90 z-50 flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-700 mb-4"></div>
         <p class="text-blue-900 font-bold text-lg animate-pulse">กำลังซิงค์ข้อมูลล่าสุดจากฐานข้อมูล...</p>
         <p class="text-sm text-gray-500 mt-2">กรุณารอสักครู่</p>
     </div>
 
-    <!-- Header -->
     <header class="header-bg text-white p-4 shadow-lg sticky top-0 z-40 flex flex-wrap justify-between items-center">
         <h1 class="text-xl font-bold md:text-2xl flex items-center gap-2">
             <span>🏫</span> Dashboard ติดตามรายงานโครงการ โรงเรียนบ้านผึ้ง
@@ -39,13 +36,8 @@
     </header>
 
     <main class="p-4 md:p-6 max-w-7xl mx-auto">
-        
-        <!-- Stat Cards with Progress Bars -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="statCards">
-            <!-- Render via JS -->
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="statCards"></div>
 
-        <!-- Filters (Sticky inside main view) -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4 items-center">
             <div class="text-gray-500 font-semibold mr-2">🔍 ค้นหาและกรอง:</div>
             <input type="text" id="searchInput" placeholder="พิมพ์ชื่อโครงการ/เลขที่..." class="border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2.5 rounded-xl flex-1 min-w-[200px] outline-none transition-all" oninput="renderTable()">
@@ -63,7 +55,6 @@
             </select>
         </div>
 
-        <!-- Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left border-collapse">
@@ -78,9 +69,7 @@
                             <th class="p-4 font-semibold whitespace-nowrap">วันที่ส่ง</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="divide-y divide-gray-100 text-sm">
-                        <!-- Render via JS -->
-                    </tbody>
+                    <tbody id="tableBody" class="divide-y divide-gray-100 text-sm"></tbody>
                 </table>
             </div>
         </div>
@@ -91,7 +80,7 @@
         let MASTER =[];
         let isUnlocked = false;
 
-        // --- ชุดข้อมูล CSV ฉบับสมบูรณ์ (ข้อมูล 260 รายการ) ---
+        // ข้อมูลตั้งต้น
         const rawCSV = `ที่,เลขที่โครงการ,ชื่อโครงการ/กิจกรรม,โครงการหลัก (ถ้าเป็นกิจกรรมย่อย),ผู้รับผิดชอบ,งบประมาณ (บาท),ปีการศึกษา,สถานะ,วันที่ส่ง
 1,1/67,โครงการส่งเสริมพัฒนาหลักสูตรสถานศึกษาและหลักสูตรท้องถิ่น,,นางสาวนิภาพร คำเพราะ,2000,2567,ส่งแล้ว,
 2,2/67,โครงการพัฒนาโสตทัศนูปกรณ์และ ICT เพื่อการศึกษา,,ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม,80000,2567,ส่งแล้ว,
@@ -176,7 +165,7 @@
 81,3/68,โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้,,นางสุมิตรา ลิ้มสุวัฒน์,22000,2568,ยังไม่ส่ง,
 82,,กิจกรรมพัฒนาระบบงานวิชาการ,โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้,นางสุมิตรา ลิ้มสุวัฒน์,1000,2568,ยังไม่ส่ง,
 83,,กิจกรรมเปิดบ้านวิชาการ,โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้,นางสุมิตรา ลิ้มสุวัฒน์,6000,2568,ยังไม่ส่ง,
-84,,กิจกรรมพัฒนากลุ่มสาระการเรียนรู้,โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้,นางสุมิตรา ลิ้มสุวัฒน์,15000,2568,ยังไม่ส่ง,
+84,,กิจกรรมพัฒากลุ่มสาระการเรียนรู้,โครงการพัฒนาคุณภาพวิชาการและกลุ่มสาระการเรียนรู้,นางสุมิตรา ลิ้มสุวัฒน์,15000,2568,ยังไม่ส่ง,
 85,4/68,โครงการยกระดับผลสัมฤทธิ์ทางการเรียน,,นางสุมิตรา ลิ้มสุวัฒน์,17000,2568,ยังไม่ส่ง,
 86,,กิจกรรมพัฒนาการประเมินระดับชาติ,โครงการยกระดับผลสัมฤทธิ์ทางการเรียน,นางสุมิตรา ลิ้มสุวัฒน์,10000,2568,ยังไม่ส่ง,
 87,,กิจกรรมส่งเสริมการอ่านและรักษ์ภาษาไทย,โครงการยกระดับผลสัมฤทธิ์ทางการเรียน,นางสาววิจิตรา ไชยพิมพ์,3000,2568,ยังไม่ส่ง,
@@ -354,7 +343,6 @@
 259,66/66,โครงการวัสดุสำนักงาน,,นางสุมิตรา ลิ้มสุวัฒน์,45000,2566,ส่งแล้ว,
 260,67/66,โครงการโรงเรียนอีโคสคูล (Eco School),,นางสาวสุกัญญา ปัญญานนท์,1000,2566,ส่งแล้ว,`;
 
-        // 1. Data Parser
         function initMasterData() {
             const lines = rawCSV.trim().split('\n').slice(1);
             let counts = { '2568': 1, '2567': 1, '2566': 1 };
@@ -378,30 +366,26 @@
                 let b = parseInt(row[5].replace(/,/g, '')) || 0;
                 let yr = row[6] ? row[6].trim() : '';
                 let statusStr = row[7] ? row[7].trim() : '';
-                let date = row[8] ? row[8].trim() : '';
-
+                
                 if (c) lastC[yr] = c; else c = lastC[yr];
-
                 let ok0 = (statusStr === 'ส่งแล้ว' || statusStr === 'TRUE');
                 let shortYr = yr.substring(2);
                 let idx = counts[yr]++;
-                let id = `${shortYr}_${idx.toString().padStart(3, '0')}`;
-
+                
                 MASTER.push({
-                    id: id, yr: yr, c: c, n: n, p: p, t: t, b: b, 
-                    ok0: ok0, 
-                    date: date || (ok0 ? '-' : '')
+                    id: `${shortYr}_${idx.toString().padStart(3, '0')}`,
+                    yr: yr, c: c, n: n, p: p, t: t, b: b, ok0: ok0, 
+                    date: ok0 ? '-' : ''
                 });
             });
         }
 
-        // 2. Fetch Google Sheets
+        // [แก้บั๊ก] เพิ่ม &t=... ป้องกันการโหลดแคชเก่า
         function loadFromSheet() {
             const script = document.createElement('script');
-            script.src = `${API_URL}?callback=_sheetCallback`;
+            script.src = `${API_URL}?callback=_sheetCallback&t=${new Date().getTime()}`;
             document.body.appendChild(script);
 
-            // Fallback timeout in case of network issue
             setTimeout(() => {
                 const loader = document.getElementById('loadingOverlay');
                 if(loader && loader.style.display !== 'none') {
@@ -415,17 +399,15 @@
             data.forEach(row => {
                 const project = MASTER.find(p => p.id == row.id);
                 if (project) {
+                    // ยึดข้อมูลจาก Sheet เป็นหลัก (ทั้ง True และ False)
                     let sheetOk = (String(row.ok).toLowerCase() === 'true');
-                    if (sheetOk) {
-                        project.ok0 = true;
-                        if (row.date) project.date = row.date;
-                    }
+                    project.ok0 = sheetOk;
+                    project.date = row.date || (sheetOk ? '-' : '');
                 }
             });
             renderStats();
             renderTable();
             
-            // Hide loading spinner smoothly
             const loader = document.getElementById('loadingOverlay');
             if(loader) {
                 loader.style.opacity = '0';
@@ -433,13 +415,14 @@
             }
         }
 
-        // 3. Save to Google Sheets
+        //[แก้บั๊ก] ใส่ mode: 'no-cors' เพื่อกันปัญหาการขัดจังหวะการบันทึก
         function syncToSheet(id, ok, date) {
             fetch(API_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 body: JSON.stringify({ id: id, ok: ok, date: date }),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            }).then(r => r.json()).then(res => console.log('Synced:', res));
+            }).then(() => console.log('Sync request sent'));
         }
 
         function toggleStatus(id) {
@@ -455,7 +438,6 @@
             });
         }
 
-        // 4. Render Beautiful Stat Cards & Progress Bars
         function renderStats() {
             const createCard = (title, icon, data, bgClass, barColor, txtColor) => {
                 const total = data.length;
@@ -484,7 +466,6 @@
             document.getElementById('statCards').innerHTML = html;
         }
 
-        // 5. Render Table with Clickable Status Badges
         function renderTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const teacher = document.getElementById('teacherInput').value.toLowerCase();
@@ -500,7 +481,6 @@
             });
 
             document.getElementById('tableBody').innerHTML = filtered.map(p => {
-                // Clickable Badges!
                 const badgeHtml = p.ok0 
                     ? `<button onclick="toggleStatus('${p.id}')" class="w-28 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 hover:text-emerald-800 transition-all shadow-sm">✅ ส่งแล้ว</button>`
                     : `<button onclick="toggleStatus('${p.id}')" class="w-28 py-1.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 hover:text-rose-700 transition-all shadow-sm">⏳ ยังไม่ส่ง</button>`;
@@ -515,15 +495,12 @@
                     <td class="p-4 border-b align-top text-slate-600">${p.t}</td>
                     <td class="p-4 border-b align-top text-slate-600">${p.b ? p.b.toLocaleString() : '-'} ฿</td>
                     <td class="p-4 border-b align-top text-center text-slate-600">${p.yr}</td>
-                    <td class="p-4 border-b align-top text-center">
-                        ${badgeHtml}
-                    </td>
+                    <td class="p-4 border-b align-top text-center">${badgeHtml}</td>
                     <td class="p-4 border-b align-top text-xs text-slate-400">${p.date || '-'}</td>
                 </tr>
             `}).join('');
         }
 
-        // Security
         function requirePin(callback) {
             if (isUnlocked) { callback(); return; }
             const pin = prompt("🔒 กรุณากรอกรหัสผ่าน (PIN) เพื่อแก้ไขสถานะ:");
@@ -535,9 +512,7 @@
                 btn.classList.replace('border-slate-500', 'border-emerald-500');
                 btn.classList.replace('hover:bg-slate-800', 'hover:bg-emerald-700');
                 callback();
-            } else if (pin !== null) {
-                alert("❌ รหัสผ่านไม่ถูกต้อง!");
-            }
+            } else if (pin !== null) { alert("❌ รหัสผ่านไม่ถูกต้อง!"); }
         }
 
         function toggleLock() {
@@ -547,34 +522,24 @@
             btn.classList.replace('bg-emerald-600', 'bg-slate-700');
             btn.classList.replace('border-emerald-500', 'border-slate-500');
             btn.classList.replace('hover:bg-emerald-700', 'hover:bg-slate-800');
-            alert("🔒 ล็อกระบบเรียบร้อยแล้ว");
         }
 
-        // Export functionality
         function exportExcel() {
             const wb = XLSX.utils.book_new();['2568', '2567', '2566'].forEach(yr => {
                 const data = MASTER.filter(p => p.yr === yr).map(p => ({
-                    'เลขที่โครงการ': p.c, 
-                    'ชื่อโครงการ/กิจกรรม': p.n, 
-                    'โครงการหลัก': p.p || '-',
-                    'ผู้รับผิดชอบ': p.t, 
-                    'งบประมาณ': p.b, 
-                    'สถานะ': p.ok0 ? 'ส่งแล้ว' : 'ยังไม่ส่ง', 
-                    'วันที่ส่ง': p.date || ''
+                    'เลขที่โครงการ': p.c, 'ชื่อโครงการ/กิจกรรม': p.n, 'โครงการหลัก': p.p || '-',
+                    'ผู้รับผิดชอบ': p.t, 'งบประมาณ': p.b, 'สถานะ': p.ok0 ? 'ส่งแล้ว' : 'ยังไม่ส่ง', 'วันที่ส่ง': p.date || ''
                 }));
-                if (data.length > 0) {
-                    const ws = XLSX.utils.json_to_sheet(data);
-                    XLSX.utils.book_append_sheet(wb, ws, `ปี ${yr}`);
-                }
+                if (data.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), `ปี ${yr}`);
             });
             XLSX.writeFile(wb, `รายงานโครงการ_โรงเรียนบ้านผึ้ง.xlsx`);
         }
 
         window.onload = () => {
             initMasterData();
-            renderStats(); // Render layout before data arrives
+            renderStats(); 
             renderTable();
-            loadFromSheet(); // Fetch and show loading overlay
+            loadFromSheet(); 
         };
     </script>
 </body>
