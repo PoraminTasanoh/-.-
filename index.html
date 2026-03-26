@@ -202,6 +202,16 @@ td{padding:9px 12px;vertical-align:middle;color:var(--text);}
   table{font-size:.8rem;}
   td,th{padding:7px 8px;}
 }
+
+/* ── LIVE SYNC INDICATOR ── */
+.sync-wrap{display:flex;align-items:center;gap:7px;font-size:.75rem;color:rgba(255,255,255,.75);white-space:nowrap;}
+.sync-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;flex-shrink:0;transition:background .3s;}
+.sync-dot.live{animation:pulse-live 2s ease-in-out infinite;}
+.sync-dot.syncing{background:#fbbf24;animation:spin-dot 1s linear infinite;}
+.sync-dot.error{background:#ef4444;animation:none;}
+@keyframes pulse-live{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+@keyframes spin-dot{0%{transform:scale(1)}50%{transform:scale(.6)}100%{transform:scale(1)}}
+.sync-time{font-size:.72rem;color:rgba(255,255,255,.6);}
 </style>
 </head>
 <body>
@@ -211,7 +221,14 @@ td{padding:9px 12px;vertical-align:middle;color:var(--text);}
     <div class="hdr-logo">🏫</div>
     <div class="hdr-title">
       <h1>Dashboard ติดตามรายงานโครงการ</h1>
-      <p>โรงเรียนบ้านผึ้ง — ปีการศึกษา 2566 และ 2567</p>
+      <p>โรงเรียนบ้านผึ้ง — ปีการศึกษา 2566, 2567 และ 2568</p>
+    </div>
+    <div class="sync-wrap" id="syncWrap" title="สถานะ sync กับ Google Sheets">
+      <div class="sync-dot live" id="syncDot"></div>
+      <div>
+        <div>🔄 Live Sync</div>
+        <div class="sync-time" id="syncTime">กำลังโหลด...</div>
+      </div>
     </div>
     <div class="hdr-actions">
       <button class="btn btn-yellow" onclick="exportExcel()">⬇️ Export Excel</button>
@@ -626,35 +643,99 @@ const MASTER = [
 // ═══════════════════════════════════
 const STORE_KEY = 'banphueng_project_status';
 const API_URL = 'https://script.google.com/macros/s/AKfycbwoWn3u7CVWoqiE9UvC-l3OIjHIFmJ4IQfWMMss_5zdERxZ0NFIr_v1m5MzAoduWp5U/exec';
+const POLL_INTERVAL = 30000; // 30 วินาที
+
+// ── Realtime Polling State ──
+let pollTimer = null;
+let lastSyncHash = '';
+let lastSyncDate = null;
+
+function setSyncDot(state) { // 'live' | 'syncing' | 'error'
+  const dot = document.getElementById('syncDot');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + state;
+}
+
+function updateSyncTime() {
+  const el = document.getElementById('syncTime');
+  if (!el || !lastSyncDate) return;
+  const d = lastSyncDate;
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  el.textContent = `อัปเดต ${hh}:${mm}:${ss}`;
+}
+
+function sheetRowsToState(rows) {
+  const st = {};
+  rows.forEach(r => {
+    st[r.id] = { ok: r.ok === true || r.ok === 'TRUE', date: r.date || '' };
+  });
+  return st;
+}
+
+// poll แบบ silent ด้วย fetch(): ถ้าข้อมูลเปลี่ยนถึงจะ re-render
+async function pollFromSheet() {
+  setSyncDot('syncing');
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error(data.error || 'API ตอบไม่ถูกต้อง');
+    const newSt = sheetRowsToState(data);
+    const newHash = JSON.stringify(newSt);
+    if (newHash !== lastSyncHash) {
+      lastSyncHash = newHash;
+      saveState(newSt);
+      renderStats();
+      renderTable();
+      if (lastSyncDate) showToast('🔄 ข้อมูลอัปเดตจากเซิร์ฟเวอร์แล้ว');
+    }
+    lastSyncDate = new Date();
+    updateSyncTime();
+    setSyncDot('live');
+  } catch(e) {
+    console.warn('poll failed:', e.message);
+    setSyncDot('error');
+  }
+}
+
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(pollFromSheet, POLL_INTERVAL);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+// หยุด poll เมื่อ tab ไม่ active — ประหยัด quota
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopPolling();
+  } else {
+    pollFromSheet(); // โหลดทันทีเมื่อกลับมา
+    startPolling();
+  }
+});
 
 async function loadFromSheet() {
-  return new Promise((resolve) => {
-    try {
-      window._sheetCallback = function(rows) {
-        try {
-          const st = {};
-          rows.forEach(r => {
-            st[r.id] = { ok: r.ok === true || r.ok === 'TRUE', date: r.date || '' };
-          });
-          saveState(st);
-        } catch(e) {
-          console.warn('แปลงข้อมูล Sheets ไม่สำเร็จ:', e);
-        }
-        resolve();
-      };
-      const script = document.createElement('script');
-      script.src = API_URL + '?callback=_sheetCallback';
-      script.onerror = () => {
-        console.warn('JSONP failed, ใช้ localStorage แทน');
-        resolve();
-      };
-      document.head.appendChild(script);
-      setTimeout(resolve, 6000);
-    } catch (err) {
-      console.warn('ดึงข้อมูลจาก Sheets ไม่สำเร็จ ใช้ localStorage แทน:', err);
-      resolve();
-    }
-  });
+  setSyncDot('syncing');
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error(data.error || 'API ตอบไม่ถูกต้อง');
+    const st = sheetRowsToState(data);
+    lastSyncHash = JSON.stringify(st);
+    saveState(st);
+    lastSyncDate = new Date();
+    updateSyncTime();
+    setSyncDot('live');
+  } catch(err) {
+    console.warn('โหลดจาก Sheets ไม่สำเร็จ ใช้ localStorage แทน:', err.message);
+    setSyncDot('error');
+    const el = document.getElementById('syncTime');
+    if (el) el.textContent = 'ใช้ข้อมูลในเครื่อง';
+  }
 }
 
 function loadState() {
@@ -1095,6 +1176,7 @@ loadFromSheet().then(() => {
   renderStats();
   renderTable();
   updateLockBadge();
+  startPolling(); // เริ่ม realtime polling หลังโหลดครั้งแรกเสร็จ
 });
 </script>
 </body>
