@@ -232,7 +232,6 @@ td{padding:9px 12px;vertical-align:middle;color:var(--text);}
     </div>
     <div class="hdr-actions">
       <button class="btn btn-yellow" onclick="exportExcel()">⬇️ Export Excel</button>
-      <button class="btn btn-red" onclick="resetConfirm()">🔄 รีเซ็ตข้อมูล</button>
       <button class="lock-badge locked" id="lockBadge" onclick="lockBadgeClick()">🔒 ล็อกอยู่</button>
     </div>
   </div>
@@ -293,10 +292,6 @@ td{padding:9px 12px;vertical-align:middle;color:var(--text);}
   <div class="table-wrap">
     <div class="table-header">
       <span class="table-title" id="tableTitle">รายการโครงการทั้งหมด</span>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-green" onclick="markAllFiltered(true)" style="font-size:.78rem;padding:6px 12px">✅ ทำเครื่องหมายส่งแล้ว (ที่กรอง)</button>
-        <button class="btn btn-red" onclick="markAllFiltered(false)" style="font-size:.78rem;padding:6px 12px">✗ ยังไม่ส่ง (ที่กรอง)</button>
-      </div>
     </div>
     <div class="tbl-scroll">
       <table>
