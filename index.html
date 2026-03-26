@@ -8,72 +8,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .header-bg { background-color: #000080; } /* Navy Blue */
+        /* Custom Scrollbar for Table */
+        ::-webkit-scrollbar { height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-slate-50 font-sans relative">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-700 mb-4"></div>
+        <p class="text-blue-900 font-bold text-lg animate-pulse">กำลังซิงค์ข้อมูลล่าสุดจากฐานข้อมูล...</p>
+        <p class="text-sm text-gray-500 mt-2">กรุณารอสักครู่</p>
+    </div>
 
     <!-- Header -->
-    <header class="header-bg text-white p-4 shadow-md flex flex-wrap justify-between items-center">
-        <h1 class="text-xl font-bold md:text-2xl">📊 Dashboard ติดตามรายงานโครงการ โรงเรียนบ้านผึ้ง</h1>
-        <div class="flex gap-2 mt-2 md:mt-0">
-            <button onclick="requirePin(exportExcel)" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded text-sm font-semibold flex items-center">
+    <header class="header-bg text-white p-4 shadow-lg sticky top-0 z-40 flex flex-wrap justify-between items-center">
+        <h1 class="text-xl font-bold md:text-2xl flex items-center gap-2">
+            <span>🏫</span> Dashboard ติดตามรายงานโครงการ โรงเรียนบ้านผึ้ง
+        </h1>
+        <div class="flex gap-3 mt-3 md:mt-0">
+            <button onclick="requirePin(exportExcel)" class="bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-lg text-sm font-semibold flex items-center shadow transition-colors">
                 📄 Export Excel
             </button>
-            <button onclick="requirePin(resetData)" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm font-semibold flex items-center">
-                🔄 รีเซ็ต
-            </button>
-            <button id="lockBtn" onclick="toggleLock()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-sm font-semibold flex items-center">
+            <button id="lockBtn" onclick="toggleLock()" class="bg-slate-700 hover:bg-slate-800 border border-slate-500 px-4 py-2 rounded-lg text-sm font-semibold flex items-center shadow transition-colors">
                 🔒 ล็อกอยู่
             </button>
         </div>
     </header>
 
-    <main class="p-4 max-w-7xl mx-auto">
-        <!-- Progress Bar -->
-        <div class="mb-6 bg-white p-4 rounded-lg shadow">
-            <h2 class="text-lg font-semibold mb-2">ภาพรวมการส่งรายงานทั้งหมด</h2>
-            <div class="w-full bg-gray-200 rounded-full h-4">
-                <div id="progressBar" class="bg-blue-600 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
-            </div>
-            <p id="progressText" class="text-sm text-gray-600 mt-1 text-right">0%</p>
+    <main class="p-4 md:p-6 max-w-7xl mx-auto">
+        
+        <!-- Stat Cards with Progress Bars -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8" id="statCards">
+            <!-- Render via JS -->
         </div>
 
-        <!-- Stat Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="statCards"></div>
-
-        <!-- Filters -->
-        <div class="bg-white p-4 rounded-lg shadow mb-6 flex flex-wrap gap-4">
-            <input type="text" id="searchInput" placeholder="ค้นหาชื่อโครงการ..." class="border p-2 rounded flex-1 min-w-[200px]" oninput="renderTable()">
-            <input type="text" id="teacherInput" placeholder="ค้นหาชื่อครู..." class="border p-2 rounded flex-1 min-w-[200px]" oninput="renderTable()">
-            <select id="yearFilter" class="border p-2 rounded" onchange="renderTable()">
-                <option value="all">ทุกปีการศึกษา</option>
-                <option value="2568">2568</option>
-                <option value="2567">2567</option>
-                <option value="2566">2566</option>
+        <!-- Filters (Sticky inside main view) -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4 items-center">
+            <div class="text-gray-500 font-semibold mr-2">🔍 ค้นหาและกรอง:</div>
+            <input type="text" id="searchInput" placeholder="พิมพ์ชื่อโครงการ/เลขที่..." class="border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2.5 rounded-xl flex-1 min-w-[200px] outline-none transition-all" oninput="renderTable()">
+            <input type="text" id="teacherInput" placeholder="พิมพ์ชื่อผู้รับผิดชอบ..." class="border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2.5 rounded-xl flex-1 min-w-[200px] outline-none transition-all" oninput="renderTable()">
+            <select id="yearFilter" class="border border-gray-300 focus:ring-2 focus:ring-blue-500 p-2.5 rounded-xl outline-none bg-white cursor-pointer" onchange="renderTable()">
+                <option value="all">📅 ทุกปีการศึกษา</option>
+                <option value="2568">ปี 2568</option>
+                <option value="2567">ปี 2567</option>
+                <option value="2566">ปี 2566</option>
             </select>
-            <select id="statusFilter" class="border p-2 rounded" onchange="renderTable()">
-                <option value="all">ทุกสถานะ</option>
-                <option value="true">ส่งแล้ว</option>
-                <option value="false">ยังไม่ส่ง</option>
+            <select id="statusFilter" class="border border-gray-300 focus:ring-2 focus:ring-blue-500 p-2.5 rounded-xl outline-none bg-white cursor-pointer" onchange="renderTable()">
+                <option value="all">📌 ทุกสถานะ</option>
+                <option value="true">✅ ส่งแล้ว</option>
+                <option value="false">⏳ ยังไม่ส่ง</option>
             </select>
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-lg shadow overflow-x-auto">
-            <table class="min-w-full text-left border-collapse">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="p-3">เลขที่</th>
-                        <th class="p-3 w-1/3">ชื่อโครงการ / กิจกรรม</th>
-                        <th class="p-3">ผู้รับผิดชอบ</th>
-                        <th class="p-3">งบประมาณ</th>
-                        <th class="p-3">ปี</th>
-                        <th class="p-3 text-center">สถานะการส่ง</th>
-                        <th class="p-3">วันที่ส่ง</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody" class="divide-y text-sm"></tbody>
-            </table>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-slate-100 text-slate-700 border-b-2 border-slate-200 text-sm">
+                        <tr>
+                            <th class="p-4 font-semibold whitespace-nowrap">เลขที่</th>
+                            <th class="p-4 font-semibold min-w-[300px]">ชื่อโครงการ / กิจกรรม</th>
+                            <th class="p-4 font-semibold whitespace-nowrap">ผู้รับผิดชอบ</th>
+                            <th class="p-4 font-semibold whitespace-nowrap">งบประมาณ</th>
+                            <th class="p-4 font-semibold text-center">ปี</th>
+                            <th class="p-4 font-semibold text-center w-32">สถานะการส่ง</th>
+                            <th class="p-4 font-semibold whitespace-nowrap">วันที่ส่ง</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-100 text-sm">
+                        <!-- Render via JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
@@ -82,7 +91,7 @@
         let MASTER =[];
         let isUnlocked = false;
 
-        // --- ชุดข้อมูล CSV ฉบับสมบูรณ์ ---
+        // --- ชุดข้อมูล CSV ฉบับสมบูรณ์ (ข้อมูล 260 รายการ) ---
         const rawCSV = `ที่,เลขที่โครงการ,ชื่อโครงการ/กิจกรรม,โครงการหลัก (ถ้าเป็นกิจกรรมย่อย),ผู้รับผิดชอบ,งบประมาณ (บาท),ปีการศึกษา,สถานะ,วันที่ส่ง
 1,1/67,โครงการส่งเสริมพัฒนาหลักสูตรสถานศึกษาและหลักสูตรท้องถิ่น,,นางสาวนิภาพร คำเพราะ,2000,2567,ส่งแล้ว,
 2,2/67,โครงการพัฒนาโสตทัศนูปกรณ์และ ICT เพื่อการศึกษา,,ว่าที่ ร.ต.ปรีดิพัทธ์ รักพรม,80000,2567,ส่งแล้ว,
@@ -345,7 +354,7 @@
 259,66/66,โครงการวัสดุสำนักงาน,,นางสุมิตรา ลิ้มสุวัฒน์,45000,2566,ส่งแล้ว,
 260,67/66,โครงการโรงเรียนอีโคสคูล (Eco School),,นางสาวสุกัญญา ปัญญานนท์,1000,2566,ส่งแล้ว,`;
 
-        // 1. ตัวแปลงข้อมูลดิบ (Data Parser)
+        // 1. Data Parser
         function initMasterData() {
             const lines = rawCSV.trim().split('\n').slice(1);
             let counts = { '2568': 1, '2567': 1, '2566': 1 };
@@ -353,7 +362,6 @@
 
             lines.forEach(line => {
                 if (!line.trim()) return;
-                
                 let row =[];
                 let inQuote = false, currentStr = '';
                 for (let i = 0; i < line.length; i++) {
@@ -387,11 +395,20 @@
             });
         }
 
-        // 2. ดึงสถานะอัปเดตจาก Google Sheets ทับ
+        // 2. Fetch Google Sheets
         function loadFromSheet() {
             const script = document.createElement('script');
             script.src = `${API_URL}?callback=_sheetCallback`;
             document.body.appendChild(script);
+
+            // Fallback timeout in case of network issue
+            setTimeout(() => {
+                const loader = document.getElementById('loadingOverlay');
+                if(loader && loader.style.display !== 'none') {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
+            }, 8000);
         }
 
         function _sheetCallback(data) {
@@ -399,8 +416,6 @@
                 const project = MASTER.find(p => p.id == row.id);
                 if (project) {
                     let sheetOk = (String(row.ok).toLowerCase() === 'true');
-                    // ถ้าใน Sheet เป็น True ให้ยึดตาม Sheet (รับประกันข้อมูลใหม่)
-                    // ถ้าใน Sheet เป็น False แต่ใน CSV บอกว่าส่งแล้ว ให้เก็บสถานะส่งแล้วไว้ (ป้องกันการรีเซ็ตข้อมูลตั้งต้น)
                     if (sheetOk) {
                         project.ok0 = true;
                         if (row.date) project.date = row.date;
@@ -409,9 +424,16 @@
             });
             renderStats();
             renderTable();
+            
+            // Hide loading spinner smoothly
+            const loader = document.getElementById('loadingOverlay');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
         }
 
-        // 3. ซิงค์สถานะใหม่กลับไปที่ Sheets เมื่อกดคลิก
+        // 3. Save to Google Sheets
         function syncToSheet(id, ok, date) {
             fetch(API_URL, {
                 method: 'POST',
@@ -433,42 +455,36 @@
             });
         }
 
+        // 4. Render Beautiful Stat Cards & Progress Bars
         function renderStats() {
-            const total = MASTER.length;
-            const submitted = MASTER.filter(p => p.ok0).length;
-            const percent = total > 0 ? Math.round((submitted / total) * 100) : 0;
-            
-            document.getElementById('progressBar').style.width = percent + '%';
-            document.getElementById('progressText').innerText = percent + '%';
-
-            const getStat = (yr) => {
-                const yrData = MASTER.filter(p => p.yr === yr);
-                return { t: yrData.length, s: yrData.filter(p => p.ok0).length };
+            const createCard = (title, icon, data, bgClass, barColor, txtColor) => {
+                const total = data.length;
+                const submitted = data.filter(p => p.ok0).length;
+                const percent = total > 0 ? Math.round((submitted / total) * 100) : 0;
+                return `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-center mb-4">
+                            <p class="text-gray-600 font-semibold flex items-center gap-2 text-sm md:text-base">${icon} ${title}</p>
+                            <p class="text-2xl font-bold ${txtColor}">${submitted} <span class="text-gray-400 text-sm">/ ${total}</span></p>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div class="${barColor} h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: ${percent}%"></div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 text-right font-medium">${percent}% สำเร็จแล้ว</p>
+                    </div>
+                `;
             };
-            const s68 = getStat('2568');
-            const s67 = getStat('2567');
-            const s66 = getStat('2566');
 
-            document.getElementById('statCards').innerHTML = `
-                <div class="bg-blue-100 p-4 rounded shadow border-l-4 border-blue-500">
-                    <p class="text-sm text-gray-600">รวมทั้งหมด</p>
-                    <p class="text-xl font-bold">${submitted} / ${total}</p>
-                </div>
-                <div class="bg-green-100 p-4 rounded shadow border-l-4 border-green-500">
-                    <p class="text-sm text-gray-600">ปี 2568</p>
-                    <p class="text-xl font-bold">${s68.s} / ${s68.t}</p>
-                </div>
-                <div class="bg-yellow-100 p-4 rounded shadow border-l-4 border-yellow-500">
-                    <p class="text-sm text-gray-600">ปี 2567</p>
-                    <p class="text-xl font-bold">${s67.s} / ${s67.t}</p>
-                </div>
-                <div class="bg-gray-100 p-4 rounded shadow border-l-4 border-gray-500">
-                    <p class="text-sm text-gray-600">ปี 2566</p>
-                    <p class="text-xl font-bold">${s66.s} / ${s66.t}</p>
-                </div>
+            const html = `
+                ${createCard('รวมทั้งหมด', '📊', MASTER, 'bg-white', 'bg-blue-600', 'text-blue-700')}
+                ${createCard('ปี 2568', '📘', MASTER.filter(p => p.yr === '2568'), 'bg-white', 'bg-green-500', 'text-green-700')}
+                ${createCard('ปี 2567', '📙', MASTER.filter(p => p.yr === '2567'), 'bg-white', 'bg-amber-500', 'text-amber-700')}
+                ${createCard('ปี 2566', '📓', MASTER.filter(p => p.yr === '2566'), 'bg-white', 'bg-slate-500', 'text-slate-700')}
             `;
+            document.getElementById('statCards').innerHTML = html;
         }
 
+        // 5. Render Table with Clickable Status Badges
         function renderTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const teacher = document.getElementById('teacherInput').value.toLowerCase();
@@ -483,56 +499,60 @@
                 return matchSearch && matchTeacher && matchYear && matchStatus;
             });
 
-            document.getElementById('tableBody').innerHTML = filtered.map(p => `
-                <tr class="hover:bg-gray-50">
-                    <td class="p-3 border-b align-top whitespace-nowrap">${p.c}</td>
-                    <td class="p-3 border-b font-medium text-gray-800">${p.n} 
-                        ${p.p ? `<br><span class="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded">ภายใต้: ${p.p}</span>` : ''}
+            document.getElementById('tableBody').innerHTML = filtered.map(p => {
+                // Clickable Badges!
+                const badgeHtml = p.ok0 
+                    ? `<button onclick="toggleStatus('${p.id}')" class="w-28 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 hover:text-emerald-800 transition-all shadow-sm">✅ ส่งแล้ว</button>`
+                    : `<button onclick="toggleStatus('${p.id}')" class="w-28 py-1.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 hover:text-rose-700 transition-all shadow-sm">⏳ ยังไม่ส่ง</button>`;
+
+                return `
+                <tr class="hover:bg-blue-50/50 transition-colors">
+                    <td class="p-4 border-b text-slate-600 align-top">${p.c}</td>
+                    <td class="p-4 border-b align-top">
+                        <span class="font-medium text-slate-800">${p.n}</span>
+                        ${p.p ? `<div class="mt-1"><span class="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">ภายใต้: ${p.p}</span></div>` : ''}
                     </td>
-                    <td class="p-3 border-b align-top text-gray-700">${p.t}</td>
-                    <td class="p-3 border-b align-top">${p.b ? p.b.toLocaleString() : '-'} ฿</td>
-                    <td class="p-3 border-b align-top text-center">${p.yr}</td>
-                    <td class="p-3 border-b align-top text-center">
-                        <input type="checkbox" class="w-5 h-5 cursor-pointer accent-green-600" ${p.ok0 ? 'checked' : ''} onchange="toggleStatus('${p.id}')">
+                    <td class="p-4 border-b align-top text-slate-600">${p.t}</td>
+                    <td class="p-4 border-b align-top text-slate-600">${p.b ? p.b.toLocaleString() : '-'} ฿</td>
+                    <td class="p-4 border-b align-top text-center text-slate-600">${p.yr}</td>
+                    <td class="p-4 border-b align-top text-center">
+                        ${badgeHtml}
                     </td>
-                    <td class="p-3 border-b align-top text-xs text-gray-500">${p.date || '-'}</td>
+                    <td class="p-4 border-b align-top text-xs text-slate-400">${p.date || '-'}</td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
+        // Security
         function requirePin(callback) {
             if (isUnlocked) { callback(); return; }
-            const pin = prompt("กรุณากรอกรหัสผ่าน (PIN) เพื่อดำเนินการ:");
+            const pin = prompt("🔒 กรุณากรอกรหัสผ่าน (PIN) เพื่อแก้ไขสถานะ:");
             if (pin === "1234") {
                 isUnlocked = true;
-                document.getElementById('lockBtn').innerText = '🔓 ปลดล็อกแล้ว';
-                document.getElementById('lockBtn').classList.replace('bg-gray-600', 'bg-green-600');
+                const btn = document.getElementById('lockBtn');
+                btn.innerHTML = '🔓 ปลดล็อกแล้ว';
+                btn.classList.replace('bg-slate-700', 'bg-emerald-600');
+                btn.classList.replace('border-slate-500', 'border-emerald-500');
+                btn.classList.replace('hover:bg-slate-800', 'hover:bg-emerald-700');
                 callback();
             } else if (pin !== null) {
-                alert("รหัสผ่านไม่ถูกต้อง!");
+                alert("❌ รหัสผ่านไม่ถูกต้อง!");
             }
         }
 
         function toggleLock() {
             isUnlocked = false;
-            document.getElementById('lockBtn').innerText = '🔒 ล็อกอยู่';
-            document.getElementById('lockBtn').classList.replace('bg-green-600', 'bg-gray-600');
-            alert("ล็อกระบบเรียบร้อย");
+            const btn = document.getElementById('lockBtn');
+            btn.innerHTML = '🔒 ล็อกอยู่';
+            btn.classList.replace('bg-emerald-600', 'bg-slate-700');
+            btn.classList.replace('border-emerald-500', 'border-slate-500');
+            btn.classList.replace('hover:bg-emerald-700', 'hover:bg-slate-800');
+            alert("🔒 ล็อกระบบเรียบร้อยแล้ว");
         }
 
-        function resetData() {
-             if(confirm("ต้องการรีเซ็ตตัวกรองและการค้นหาทั้งหมดหรือไม่?")) {
-                 document.getElementById('searchInput').value = '';
-                 document.getElementById('teacherInput').value = '';
-                 document.getElementById('yearFilter').value = 'all';
-                 document.getElementById('statusFilter').value = 'all';
-                 renderTable();
-             }
-        }
-
+        // Export functionality
         function exportExcel() {
-            const wb = XLSX.utils.book_new();
-            ['2568', '2567', '2566'].forEach(yr => {
+            const wb = XLSX.utils.book_new();['2568', '2567', '2566'].forEach(yr => {
                 const data = MASTER.filter(p => p.yr === yr).map(p => ({
                     'เลขที่โครงการ': p.c, 
                     'ชื่อโครงการ/กิจกรรม': p.n, 
@@ -551,10 +571,10 @@
         }
 
         window.onload = () => {
-            initMasterData(); // โหลดข้อมูลจาก CSV
-            renderStats();
+            initMasterData();
+            renderStats(); // Render layout before data arrives
             renderTable();
-            loadFromSheet();  // ดึงสถานะอัปเดตจาก Google Sheets
+            loadFromSheet(); // Fetch and show loading overlay
         };
     </script>
 </body>
